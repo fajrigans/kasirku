@@ -6,16 +6,15 @@
     <title>Aplikasi Kasir Lengkap - Kaspocket</title>
     <link rel="icon" type="image/png" href="https://content-fetcher.web.app/?id=uploaded:Desain tanpa judul (32).png-48698211-92e8-44c7-a51e-0cc6b19ec995">
 
-    <meta name="google-site-verification" content="P3YGHZCaE9-ETe_ESuUs491p6Ytg0krlNd_wGW3KECo" />
     <meta name="description" content="Kaspocket adalah aplikasi kasir (Point of Sale) lengkap untuk manajemen produk, transaksi, dan laporan penjualan. Mudah digunakan dan responsif.">
-    <meta name="keywords" content="kaspocket, aplikasi kasir, point of sale, POS, manajemen produk, riwayat transaksi, laporan penjualan, aplikasi UMKM, kasir online,com,website,kasir">
+    <meta name="keywords" content="kaspocket, aplikasi kasir, point of sale, POS, manajemen produk, riwayat transaksi, laporan penjualan, aplikasi UMKM, kasir online">
     <meta name="author" content="Kaspocket App">
     
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://kaspocket.vercel.app/"> <meta property="og:title" content="Kaspocket - Aplikasi Kasir Lengkap untuk Bisnis Anda">
+    <meta property="og:url" content="https://kasirku-app.vercel.app/"> <meta property="og:title" content="Kaspocket - Aplikasi Kasir Lengkap untuk Bisnis Anda">
     <meta property="og:description" content="Kelola produk, rekam transaksi, dan pantau penjualan dengan mudah menggunakan Kaspocket. Solusi POS modern untuk UMKM.">
     <meta property="og:image" content="https://content-fetcher.web.app/?id=uploaded:Desain tanpa judul (32).png-48698211-92e8-44c7-a51e-0cc6b19ec995"> <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://kaspocket.vercel.app/"> <meta property="twitter:title" content="Kaspocket - Aplikasi Kasir Lengkap untuk Bisnis Anda">
+    <meta property="twitter:url" content="https://kasirku-app.vercel.app/"> <meta property="twitter:title" content="Kaspocket - Aplikasi Kasir Lengkap untuk Bisnis Anda">
     <meta property="twitter:description" content="Kelola produk, rekam transaksi, dan pantau penjualan dengan mudah menggunakan Kaspocket. Solusi POS modern untuk UMKM.">
     <meta property="twitter:image" content="https://content-fetcher.web.app/?id=uploaded:Desain tanpa judul (32).png-48698211-92e8-44c7-a51e-0cc6b19ec995"> <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -72,12 +71,15 @@
             background-color: #fefefe;
             padding: 25px;
             border: 1px solid #888;
-            width: 90%;
+            width: 90%; /* Responsive width */
             max-width: 550px;
             border-radius: 0.5rem;
             text-align: center;
             position: relative;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            /* Ensure modal content fits smaller screens */
+            max-height: 90vh; /* Limit height to prevent overflow on small screens */
+            overflow-y: auto; /* Allow scrolling within modal if content is long */
         }
         .modal-close-button {
             position: absolute;
@@ -139,6 +141,8 @@
             text-align: center;
             position: relative;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            max-height: 90vh;
+            overflow-y: auto;
         }
         .loading-overlay {
             display: none;
@@ -195,11 +199,90 @@
         #auth-modal .modal-content, #delete-account-modal .modal-content {
             max-width: 450px;
         }
+
+        /* Responsive Sidebar Styles */
+        /* By default, sidebar is hidden off-screen on small devices */
+        #sidebar {
+            position: fixed; /* Use fixed for mobile overlay */
+            top: 0;
+            left: 0;
+            bottom: 0;
+            z-index: 50; /* Ensure it's above other content */
+            transform: translateX(-100%); /* Hidden by default */
+            transition: transform 0.3s ease-in-out;
+            width: 256px; /* 64 Tailwind units */
+            /* Ensure background and overflow for sidebar */
+            background-color: #1a202c; /* Tailwind gray-800 */
+            overflow-y: auto;
+        }
+        #sidebar.open {
+            transform: translateX(0); /* Slide in when open */
+        }
+        #sidebar-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 40; /* Below sidebar */
+            display: none; /* Hidden by default */
+        }
+        #sidebar-overlay.active {
+            display: block; /* Show when sidebar is open */
+        }
+
+        /* Main content adjustments for mobile header and spacing */
+        #main-content {
+            flex-grow: 1; /* Allow main content to take remaining space */
+            padding-left: 1rem; /* Default padding on small screens */
+            padding-right: 1rem;
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+            /* Adjust padding for larger screens */
+            @media (min-width: 640px) { /* sm */
+                padding-left: 1.5rem;
+                padding-right: 1.5rem;
+            }
+            @media (min-width: 1024px) { /* lg */
+                padding-left: 2rem;
+                padding-right: 2rem;
+                /* On large screens, sidebar takes up space, no need for fixed position logic on main */
+                margin-left: 256px; /* Compensate for fixed sidebar width */
+            }
+        }
+
+        /* Hide main header for desktop view */
+        .lg\\:hidden {
+            display: flex !important; /* Keep mobile header visible by default */
+        }
+        @media (min-width: 1024px) { /* lg */
+            .lg\\:hidden {
+                display: none !important; /* Hide mobile header on large screens */
+            }
+        }
+        /* Show desktop sidebar content */
+        .lg\\:relative {
+            position: relative;
+        }
+        .lg\\:translate-x-0 {
+            transform: translateX(0);
+        }
+        .lg\\:w-64 {
+            width: 256px;
+        }
+        .lg\\:h-full {
+            height: 100%;
+        }
+        .lg\\:overflow-y-auto {
+            overflow-y: auto;
+        }
+
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
     <div class="flex h-screen overflow-hidden">
-        <nav id="sidebar" class="w-64 bg-gray-800 text-gray-200 p-5 space-y-3 flex-shrink-0 overflow-y-auto">
+        <nav id="sidebar" class="bg-gray-800 text-gray-200 p-5 space-y-3 flex-shrink-0
+                                 transform -translate-x-full transition-transform duration-300 ease-in-out
+                                 absolute inset-y-0 left-0 z-50
+                                 lg:relative lg:translate-x-0 lg:w-64 lg:h-full lg:overflow-y-auto">
             <h1 class="text-2xl font-bold text-white mb-6 text-center">Kaspocket</h1>
             <a data-view="kasir" class="nav-link active"><i class="fas fa-cash-register"></i>Kasir</a>
             <a data-view="manajemen-produk" class="nav-link"><i class="fas fa-box-open"></i>Manajemen Produk</a>
@@ -220,10 +303,18 @@
             </div>
         </nav>
 
+        <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden lg:hidden"></div>
+
         <main id="main-content" class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto" style="display: none;">
+            <header class="flex items-center justify-between mb-6 lg:hidden">
+                <button id="sidebar-toggle" class="text-gray-600 focus:outline-none focus:text-gray-900">
+                    <i class="fas fa-bars text-2xl"></i>
+                </button>
+                <h1 class="text-2xl font-bold text-indigo-600">Kaspocket</h1>
+            </header>
+
             <div id="view-kasir" class="content-view active">
-                <header class="mb-6">
-                    <h2 class="text-3xl font-bold text-indigo-600">Point of Sale</h2>
+                <header class="mb-6 lg:block hidden"> <h2 class="text-3xl font-bold text-indigo-600">Point of Sale</h2>
                 </header>
                 <div class="flex flex-col lg:flex-row gap-6">
                     <div class="lg:w-3/5">
@@ -263,8 +354,7 @@
             </div>
 
             <div id="view-manajemen-produk" class="content-view">
-                <header class="mb-6">
-                    <h2 class="text-3xl font-bold text-indigo-600">Manajemen Produk</h2>
+                <header class="mb-6 lg:block hidden"> <h2 class="text-3xl font-bold text-indigo-600">Manajemen Produk</h2>
                 </header>
                 <div class="bg-white p-6 rounded-lg shadow-xl mb-6">
                     <h3 class="text-xl font-semibold mb-4 text-gray-700">Tambah Produk Baru</h3>
@@ -292,8 +382,7 @@
             </div>
 
             <div id="view-riwayat" class="content-view">
-                <header class="mb-6">
-                    <h2 class="text-3xl font-bold text-indigo-600">Riwayat Transaksi</h2>
+                <header class="mb-6 lg:block hidden"> <h2 class="text-3xl font-bold text-indigo-600">Riwayat Transaksi</h2>
                 </header>
                 <div class="bg-white p-6 rounded-lg shadow-xl">
                     <div id="transaction-history-list" class="transaction-history-list max-h-[70vh] overflow-y-auto space-y-4">
@@ -303,14 +392,12 @@
             </div>
 
             <div id="view-laporan" class="content-view">
-                <header class="mb-6">
-                    <h2 class="text-3xl font-bold text-indigo-600">Laporan Penjualan</h2>
+                <header class="mb-6 lg:block hidden"> <h2 class="text-3xl font-bold text-indigo-600">Laporan Penjualan</h2>
                 </header>
                 <div class="bg-white p-6 rounded-lg shadow-xl">
                     <p class="text-gray-600">Fitur laporan (harian, mingguan, bulanan) sedang dalam pengembangan.</p>
-                    <div class="mt-4">
-                        <button class="btn-secondary mr-2">Laporan Harian</button>
-                        <button class="btn-secondary mr-2">Laporan Mingguan</button>
+                    <div class="mt-4 flex flex-wrap gap-2"> <button class="btn-secondary">Laporan Harian</button>
+                        <button class="btn-secondary">Laporan Mingguan</button>
                         <button class="btn-secondary">Laporan Bulanan</button>
                     </div>
                     <button id="generate-sales-insights-button" class="btn-primary mt-6">Generate Sales Insights ✨</button>
@@ -321,8 +408,7 @@
             </div>
 
             <div id="view-pengaturan" class="content-view">
-                <header class="mb-6">
-                    <h2 class="text-3xl font-bold text-indigo-600">Pengaturan Aplikasi</h2>
+                <header class="mb-6 lg:block hidden"> <h2 class="text-3xl font-bold text-indigo-600">Pengaturan Aplikasi</h2>
                 </header>
                 <div class="bg-white p-6 rounded-lg shadow-xl mb-6">
                     <h3 class="text-xl font-semibold mb-4 text-gray-700">Pengaturan Struk & Toko</h3>
@@ -502,6 +588,8 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, signInWithCustomToken, signInAnonymously, reauthenticateWithCredential, EmailAuthProvider, deleteUser } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, query, onSnapshot, addDoc, doc, deleteDoc, setDoc, getDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
 
         // Global variables for Firebase and data
         let db;
@@ -541,7 +629,6 @@
 
         // DOM Elements for Payment Modal
         const paymentModal = document.getElementById('payment-modal');
-        // FIX: Removed erroneous 'document =' assignment
         const closeModalButton = document.getElementById('close-modal-button');
         const viewReceiptButton = document.getElementById('view-receipt-button');
         const confirmPaymentAndCloseButton = document.getElementById('confirm-payment-and-close-button');
@@ -627,6 +714,12 @@
         const deleteAccountForm = document.getElementById('delete-account-form');
         const deleteAccountPasswordInput = document.getElementById('delete-account-password');
         const cancelDeleteAccountButton = document.getElementById('cancel-delete-account-button');
+
+        // DOM Elements for Responsive Sidebar
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+
 
         let isRegisterMode = false; // State for auth modal
 
@@ -936,8 +1029,35 @@
                 // Show the selected content view
                 const targetViewId = this.dataset.view;
                 document.getElementById(`view-${targetViewId}`).classList.add('active');
+
+                // Close sidebar on mobile after navigating
+                if (window.innerWidth < 1024) { // Only close if it's a mobile view
+                    closeSidebar();
+                }
             });
         });
+
+        // --- Responsive Sidebar Toggle Logic ---
+        function openSidebar() {
+            sidebar.classList.add('open');
+            sidebarOverlay.classList.add('active');
+        }
+
+        function closeSidebar() {
+            sidebar.classList.remove('open');
+            sidebarOverlay.classList.remove('active');
+        }
+
+        sidebarToggle.addEventListener('click', openSidebar);
+        sidebarOverlay.addEventListener('click', closeSidebar);
+
+        // Close sidebar if screen resizes to desktop while open
+        window.addEventListener('resize', () => {
+            if (window.innerWidth >= 1024) { // Equivalent to Tailwind's 'lg' breakpoint
+                closeSidebar();
+            }
+        });
+
 
         // --- Settings Functions ---
         /**
@@ -1091,8 +1211,6 @@
                 hideLoading();
             }
         }
-        // Need to import getDocs for the delete function.
-        import { getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 
         // --- Product Management Functions ---
