@@ -1,0 +1,1732 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Kasir Lengkap</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .product-card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .cart-items-container::-webkit-scrollbar,
+        .product-management-list::-webkit-scrollbar,
+        .transaction-history-list::-webkit-scrollbar {
+            width: 8px;
+        }
+        .cart-items-container::-webkit-scrollbar-track,
+        .product-management-list::-webkit-scrollbar-track,
+        .transaction-history-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .cart-items-container::-webkit-scrollbar-thumb,
+        .product-management-list::-webkit-scrollbar-thumb,
+        .transaction-history-list::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        .cart-items-container::-webkit-scrollbar-thumb:hover,
+        .product-management-list::-webkit-scrollbar-thumb:hover,
+        .transaction-history-list::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000; /* Ensure modal is on top of everything */
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            padding: 25px;
+            border: 1px solid #888;
+            width: 90%;
+            max-width: 550px;
+            border-radius: 0.5rem;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .modal-close-button {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border-radius: 0.375rem;
+            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .nav-link:hover {
+            background-color: #4a5568; /* Slightly darker gray */
+        }
+        .nav-link.active {
+            background-color: #4f46e5; /* Indigo */
+            color: white;
+            font-weight: 600;
+        }
+        .nav-link i {
+            margin-right: 0.75rem;
+            width: 20px; /* Ensure icons align */
+            text-align: center;
+        }
+        .content-view {
+            display: none; /* Hidden by default */
+        }
+        .content-view.active {
+            display: block;
+        }
+        .form-input {
+            @apply w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm;
+        }
+        .btn-primary {
+            @apply bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-150 ease-in-out disabled:opacity-50;
+        }
+        .btn-danger {
+            @apply bg-red-500 hover:bg-red-600 text-white font-semibold py-1 px-3 rounded-md shadow-sm transition duration-150 ease-in-out text-xs;
+        }
+        .btn-secondary {
+            @apply bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-150 ease-in-out;
+        }
+        .message-modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 25px;
+            border: 1px solid #888;
+            width: 90%;
+            max-width: 400px;
+            border-radius: 0.5rem;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            z-index: 1001; /* Higher than modals */
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #4f46e5;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Styles for Print Receipt */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #receipt-print-area, #receipt-print-area * {
+                visibility: visible;
+            }
+            #receipt-print-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                padding: 20px;
+                box-sizing: border-box;
+                font-size: 12px; /* Adjust font size for print */
+            }
+            .modal {
+                display: none !important; /* Hide modal in print */
+            }
+            #receipt-print-area .no-print {
+                display: none; /* Hide buttons/elements not needed for print */
+            }
+        }
+
+        /* Auth Modal Specific Styles */
+        #auth-modal .modal-content, #delete-account-modal .modal-content {
+            max-width: 450px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+    <div class="flex h-screen overflow-hidden">
+        <nav id="sidebar" class="w-64 bg-gray-800 text-gray-200 p-5 space-y-3 flex-shrink-0 overflow-y-auto">
+            <h1 class="text-2xl font-bold text-white mb-6 text-center">KasirKu</h1>
+            <a data-view="kasir" class="nav-link active"><i class="fas fa-cash-register"></i>Kasir</a>
+            <a data-view="manajemen-produk" class="nav-link"><i class="fas fa-box-open"></i>Manajemen Produk</a>
+            <a data-view="riwayat" class="nav-link"><i class="fas fa-history"></i>Riwayat Transaksi</a>
+            <a data-view="laporan" class="nav-link"><i class="fas fa-chart-line"></i>Laporan</a>
+            <a data-view="pengaturan" class="nav-link"><i class="fas fa-cog"></i>Pengaturan</a>
+            <div class="pt-8 text-xs text-gray-400">
+                <p id="user-id-display">User ID: Loading...</p>
+                <p id="user-email-display" class="mt-1"></p>
+            </div>
+            <div id="auth-actions" class="mt-auto pt-5 border-t border-gray-700">
+                <button id="logout-button" class="w-full btn-danger py-2" style="display: none;">
+                    <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                </button>
+                <button id="login-register-button" class="w-full btn-primary py-2" style="display: none;">
+                    <i class="fas fa-sign-in-alt mr-2"></i> Login / Register
+                </button>
+            </div>
+        </nav>
+
+        <main id="main-content" class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto" style="display: none;">
+            <div id="view-kasir" class="content-view active">
+                <header class="mb-6">
+                    <h2 class="text-3xl font-bold text-indigo-600">Point of Sale</h2>
+                </header>
+                <div class="flex flex-col lg:flex-row gap-6">
+                    <div class="lg:w-3/5">
+                        <h3 class="text-2xl font-semibold mb-4 text-gray-700">Pilih Produk</h3>
+                        <div id="product-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                        </div>
+                    </div>
+                    <div class="lg:w-2/5">
+                        <div class="bg-white p-6 rounded-lg shadow-xl">
+                            <h3 class="text-2xl font-semibold mb-4 border-b pb-2 text-indigo-600">Keranjang Belanja</h3>
+                            <div id="cart-items" class="cart-items-container max-h-60 overflow-y-auto mb-4 space-y-2">
+                                <p id="empty-cart-message" class="text-gray-500">Keranjang masih kosong.</p>
+                            </div>
+                            <div class="border-t pt-4">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-lg font-medium text-gray-700">Subtotal:</span>
+                                    <span id="subtotal-price" class="text-lg font-semibold text-gray-900">Rp 0</span>
+                                </div>
+                                <div class="flex justify-between items-center mb-4">
+                                    <span class="text-lg font-medium text-gray-700">Pajak (<span id="tax-percentage-display">10</span>%):</span>
+                                    <span id="tax-price" class="text-lg font-semibold text-gray-900">Rp 0</span>
+                                </div>
+                                <div class="flex justify-between items-center text-xl font-bold text-indigo-700 mb-6">
+                                    <span>Total:</span>
+                                    <span id="total-price">Rp 0</span>
+                                </div>
+                                <button id="pay-button" class="w-full btn-primary py-3" disabled>
+                                    Bayar Sekarang
+                                </button>
+                                <button id="clear-cart-button" class="w-full btn-danger py-3 mt-3" disabled>
+                                    Kosongkan Keranjang
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-manajemen-produk" class="content-view">
+                <header class="mb-6">
+                    <h2 class="text-3xl font-bold text-indigo-600">Manajemen Produk</h2>
+                </header>
+                <div class="bg-white p-6 rounded-lg shadow-xl mb-6">
+                    <h3 class="text-xl font-semibold mb-4 text-gray-700">Tambah Produk Baru</h3>
+                    <form id="add-product-form" class="space-y-4">
+                        <div>
+                            <label for="product-name" class="block text-sm font-medium text-gray-700">Nama Produk</label>
+                            <input type="text" id="product-name" name="product-name" class="form-input" required>
+                        </div>
+                        <div>
+                            <label for="product-price" class="block text-sm font-medium text-gray-700">Harga Produk (Rp)</label>
+                            <input type="number" id="product-price" name="product-price" class="form-input" min="0" required>
+                        </div>
+                        <div>
+                            <label for="product-image" class="block text-sm font-medium text-gray-700">URL Gambar Produk (Opsional)</label>
+                            <input type="url" id="product-image" name="product-image" class="form-input" placeholder="https://placehold.co/150x150/...">
+                        </div>
+                        <button type="submit" class="btn-primary">Tambah Produk</button>
+                    </form>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-xl">
+                    <h3 class="text-xl font-semibold mb-4 text-gray-700">Daftar Produk Tersedia</h3>
+                    <div id="product-management-list" class="product-management-list max-h-96 overflow-y-auto space-y-3">
+                        </div>
+                </div>
+            </div>
+
+            <div id="view-riwayat" class="content-view">
+                <header class="mb-6">
+                    <h2 class="text-3xl font-bold text-indigo-600">Riwayat Transaksi</h2>
+                </header>
+                <div class="bg-white p-6 rounded-lg shadow-xl">
+                    <div id="transaction-history-list" class="transaction-history-list max-h-[70vh] overflow-y-auto space-y-4">
+                        <p id="empty-history-message" class="text-gray-500">Belum ada riwayat transaksi.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-laporan" class="content-view">
+                <header class="mb-6">
+                    <h2 class="text-3xl font-bold text-indigo-600">Laporan Penjualan</h2>
+                </header>
+                <div class="bg-white p-6 rounded-lg shadow-xl">
+                    <p class="text-gray-600">Fitur laporan (harian, mingguan, bulanan) sedang dalam pengembangan.</p>
+                    <div class="mt-4">
+                        <button class="btn-secondary mr-2">Laporan Harian</button>
+                        <button class="btn-secondary mr-2">Laporan Mingguan</button>
+                        <button class="btn-secondary">Laporan Bulanan</button>
+                    </div>
+                    <button id="generate-sales-insights-button" class="btn-primary mt-6">Generate Sales Insights ✨</button>
+                    <div id="report-output" class="mt-6 p-4 border rounded-md bg-gray-50 min-h-[200px]">
+                        <p class="text-gray-500">Hasil laporan akan ditampilkan di sini.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-pengaturan" class="content-view">
+                <header class="mb-6">
+                    <h2 class="text-3xl font-bold text-indigo-600">Pengaturan Aplikasi</h2>
+                </header>
+                <div class="bg-white p-6 rounded-lg shadow-xl mb-6">
+                    <h3 class="text-xl font-semibold mb-4 text-gray-700">Pengaturan Struk & Toko</h3>
+                    <form id="settings-form" class="space-y-4">
+                        <div>
+                            <label for="store-name" class="block text-sm font-medium text-gray-700">Nama Toko</label>
+                            <input type="text" id="store-name" name="store-name" class="form-input" required>
+                        </div>
+                        <div>
+                            <label for="store-address" class="block text-sm font-medium text-gray-700">Alamat Toko</label>
+                            <input type="text" id="store-address" name="store-address" class="form-input" required>
+                        </div>
+                        <div>
+                            <label for="store-phone" class="block text-sm font-medium text-gray-700">Nomor Telepon Toko</label>
+                            <input type="tel" id="store-phone" name="store-phone" class="form-input">
+                        </div>
+                        <div>
+                            <label for="store-logo-url" class="block text-sm font-medium text-gray-700">URL Logo Toko</label>
+                            <input type="url" id="store-logo-url" name="store-logo-url" class="form-input" placeholder="https://placehold.co/100x50/...">
+                            <p class="text-xs text-gray-500 mt-1">Gunakan URL gambar logo. Ukuran optimal sekitar 100x50 piksel.</p>
+                        </div>
+                        <div>
+                            <label for="tax-rate" class="block text-sm font-medium text-gray-700">Tingkat Pajak (%)</label>
+                            <input type="number" id="tax-rate" name="tax-rate" class="form-input" min="0" max="100" step="0.1" required>
+                            <p class="text-xs text-gray-500 mt-1">Masukkan persentase pajak (misal: 10 untuk 10%).</p>
+                        </div>
+                        <button type="submit" class="btn-primary">Simpan Pengaturan</button>
+                    </form>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-xl mt-6">
+                    <h3 class="text-xl font-semibold mb-4 text-gray-700">Kelola Akun</h3>
+                    <p class="text-gray-600 mb-4">Hapus akun Anda secara permanen beserta semua data produk dan transaksi.</p>
+                    <button id="delete-account-button" class="btn-danger py-2 px-4">
+                        <i class="fas fa-user-times mr-2"></i> Hapus Akun Saya
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="payment-modal" class="modal">
+        <div class="modal-content">
+            <span id="close-modal-button" class="modal-close-button">&times;</span>
+            <h3 class="text-2xl font-semibold mb-4 text-green-600">Pembayaran Berhasil!</h3>
+            <i class="fas fa-check-circle text-green-500 text-5xl mb-4"></i>
+            <p class="text-gray-700 mb-2">Total yang dibayarkan: <span id="modal-total-paid" class="font-bold"></span></p>
+            <p class="text-gray-600">Terima kasih telah berbelanja.</p>
+            <button id="view-receipt-button" class="mt-6 bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2 px-6 rounded-lg transition duration-150 ease-in-out">
+                Lihat Struk
+            </button>
+            <button id="confirm-payment-and-close-button" class="mt-3 bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-6 rounded-lg transition duration-150 ease-in-out">
+                Selesai
+            </button>
+        </div>
+    </div>
+
+    <div id="receipt-modal" class="modal">
+        <div class="modal-content max-w-sm p-6 bg-white rounded-lg shadow-xl text-left">
+            <span id="close-receipt-modal-button" class="modal-close-button">&times;</span>
+            <div id="receipt-print-area" class="p-4">
+                <div class="text-center mb-4">
+                    <img id="receipt-logo" src="https://placehold.co/100x50/4f46e5/ffffff?text=LOGO+KASIR" alt="Company Logo" class="mx-auto mb-2 rounded-md" onerror="this.onerror=null;this.src='https://placehold.co/100x50/cccccc/ffffff?text=Error';">
+                    <h2 id="receipt-store-name" class="text-xl font-bold text-gray-800">KasirKu Store</h2>
+                    <p id="receipt-store-address" class="text-xs text-gray-600">Jl. Contoh No. 123, Kota Anda</p>
+                    <p id="receipt-store-phone" class="text-xs text-gray-600">Telp: (021) 1234567</p>
+                </div>
+                <div class="border-t border-b border-gray-300 py-2 mb-4">
+                    <p class="text-sm">Tanggal: <span id="receipt-date"></span></p>
+                    <p class="text-sm">ID Transaksi: <span id="receipt-transaction-id"></span></p>
+                </div>
+                <div class="mb-4">
+                    <h3 class="text-md font-semibold mb-2">Detail Pembelian:</h3>
+                    <ul id="receipt-items" class="space-y-1">
+                        </ul>
+                </div>
+                <div class="border-t border-gray-300 pt-2 mb-4">
+                    <div class="flex justify-between text-sm mb-1">
+                        <span>Subtotal:</span>
+                        <span id="receipt-subtotal"></span>
+                    </div>
+                    <div class="flex justify-between text-sm mb-1">
+                        <span>Pajak (<span id="receipt-tax-percentage">10</span>%):</span>
+                        <span id="receipt-tax"></span>
+                    </div>
+                    <div class="flex justify-between text-lg font-bold mt-2">
+                        <span>TOTAL:</span>
+                        <span id="receipt-total"></span>
+                    </div>
+                </div>
+                <div class="text-center text-xs text-gray-600">
+                    <p>Terima kasih atas kunjungan Anda!</p>
+                    <p>Barang yang sudah dibeli tidak dapat dikembalikan.</p>
+                </div>
+            </div>
+            <div class="no-print flex justify-center gap-4 mt-6 flex-wrap">
+                <button id="print-receipt-button" class="btn-primary flex items-center mb-2 sm:mb-0">
+                    <i class="fas fa-print mr-2"></i> Cetak Struk
+                </button>
+                <button id="save-pdf-button" class="btn-secondary flex items-center mb-2 sm:mb-0">
+                    <i class="fas fa-file-pdf mr-2"></i> Simpan PDF
+                </button>
+                <button id="save-image-button" class="btn-secondary flex items-center mb-2 sm:mb-0">
+                    <i class="fas fa-image mr-2"></i> Simpan Gambar
+                </button>
+                <button id="share-receipt-button" class="btn-primary flex items-center mb-2 sm:mb-0">
+                    <i class="fas fa-share-alt mr-2"></i> Bagikan Struk
+                </button>
+                <button id="close-receipt-and-finish-button" class="btn-secondary">
+                    Selesai
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="message-modal" class="modal">
+        <div class="message-modal-content">
+            <span id="close-message-modal-button" class="modal-close-button">&times;</span>
+            <h3 id="message-modal-title" class="text-xl font-semibold mb-3"></h3>
+            <p id="message-modal-text" class="text-gray-700 mb-4"></p>
+            <button id="ok-message-modal-button" class="btn-primary">OK</button>
+        </div>
+    </div>
+
+    <div id="auth-modal" class="modal">
+        <div class="modal-content">
+            <h2 id="auth-title" class="text-2xl font-bold text-indigo-600 mb-6">Login</h2>
+            <form id="auth-form" class="space-y-4">
+                <div>
+                    <label for="auth-email" class="block text-sm font-medium text-gray-700 text-left">Email</label>
+                    <input type="email" id="auth-email" name="auth-email" class="form-input" required>
+                </div>
+                <div>
+                    <label for="auth-password" class="block text-sm font-medium text-gray-700 text-left">Password</label>
+                    <input type="password" id="auth-password" name="auth-password" class="form-input" required>
+                </div>
+                <button type="submit" id="auth-submit-button" class="btn-primary w-full py-3">Login</button>
+            </form>
+            <p class="mt-4 text-sm text-gray-600">
+                Belum punya akun? <a href="#" id="switch-to-register" class="text-indigo-600 hover:underline">Daftar di sini</a>
+            </p>
+            <p class="mt-2 text-sm text-gray-600" id="switch-to-login-container" style="display: none;">
+                Sudah punya akun? <a href="#" id="switch-to-login" class="text-indigo-600 hover:underline">Login di sini</a>
+            </p>
+        </div>
+    </div>
+
+    <div id="delete-account-modal" class="modal">
+        <div class="modal-content">
+            <span id="close-delete-account-modal-button" class="modal-close-button">&times;</span>
+            <h2 class="text-2xl font-bold text-red-600 mb-4">Hapus Akun Permanen</h2>
+            <p class="text-gray-700 mb-6">
+                Anda akan menghapus akun Anda secara permanen. Tindakan ini **tidak dapat dibatalkan** dan akan menghapus semua produk, transaksi, dan pengaturan Anda.
+                Untuk melanjutkan, mohon masukkan kata sandi Anda.
+            </p>
+            <form id="delete-account-form" class="space-y-4">
+                <div>
+                    <label for="delete-account-password" class="block text-sm font-medium text-gray-700 text-left">Konfirmasi Kata Sandi Anda</label>
+                    <input type="password" id="delete-account-password" name="delete-account-password" class="form-input" required>
+                </div>
+                <div class="flex justify-between gap-4 mt-6">
+                    <button type="button" id="cancel-delete-account-button" class="btn-secondary w-1/2">Batal</button>
+                    <button type="submit" id="confirm-delete-account-button" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-150 ease-in-out w-1/2">
+                        Hapus Akun
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <p class="mt-4 text-gray-700 text-lg" id="loading-message">Memuat data...</p>
+    </div>
+
+    <script type="module">
+        // Import Firebase modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, signInWithCustomToken, signInAnonymously, reauthenticateWithCredential, EmailAuthProvider, deleteUser } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, query, onSnapshot, addDoc, doc, deleteDoc, setDoc, getDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables for Firebase and data
+        let db;
+        let auth;
+        let userId;
+        let userEmail;
+        let isAuthReady = false; // Flag to ensure auth is ready before Firestore ops
+        // Set the appId to "kasir-9e759" as requested by the user.
+        const appId = 'kasir-9e759';
+
+        // Local data stores (cart remains local, products/transactions are synced from Firestore)
+        let products = []; // Populated by Firestore listener
+        let cart = []; // Format: { productId: 'firestoreDocId', name: 'Apel', price: 5000, quantity: 1 }
+        let transactions = []; // Populated by Firestore listener
+        let lastTransaction = null; // To store the last successful transaction for receipt
+
+        // Default settings for the store and receipt
+        let appSettings = {
+            storeName: 'KasirKu Store',
+            storeAddress: 'Jl. Contoh No. 123, Kota Anda',
+            storePhone: '(021) 1234567',
+            storeLogoUrl: 'https://placehold.co/100x50/4f46e5/ffffff?text=LOGO+KASIR',
+            taxRate: 10 // Default tax rate in percentage
+        };
+
+        // DOM Elements for Kasir View
+        const productListElement = document.getElementById('product-list');
+        const cartItemsElement = document.getElementById('cart-items');
+        const subtotalPriceElement = document.getElementById('subtotal-price');
+        const taxPriceElement = document.getElementById('tax-price');
+        const totalPriceElement = document.getElementById('total-price');
+        const payButton = document.getElementById('pay-button');
+        const clearCartButton = document.getElementById('clear-cart-button');
+        const emptyCartMessage = document.getElementById('empty-cart-message');
+        const taxPercentageDisplay = document.getElementById('tax-percentage-display');
+
+
+        // DOM Elements for Payment Modal
+        const paymentModal = document.getElementById('payment-modal');
+        // FIX: Removed erroneous 'document =' assignment
+        const closeModalButton = document.getElementById('close-modal-button');
+        const viewReceiptButton = document.getElementById('view-receipt-button');
+        const confirmPaymentAndCloseButton = document.getElementById('confirm-payment-and-close-button');
+        const modalTotalPaidElement = document.getElementById('modal-total-paid');
+
+        // DOM Elements for Receipt Modal
+        const receiptModal = document.getElementById('receipt-modal');
+        const closeReceiptModalButton = document.getElementById('close-receipt-modal-button');
+        const printReceiptButton = document.getElementById('print-receipt-button');
+        const savePdfButton = document.getElementById('save-pdf-button');
+        const saveImageButton = document.getElementById('save-image-button');
+        const shareReceiptButton = document.getElementById('share-receipt-button');
+        const closeReceiptAndFinishButton = document.getElementById('close-receipt-and-finish-button');
+        const receiptLogoElement = document.getElementById('receipt-logo');
+        const receiptStoreNameElement = document.getElementById('receipt-store-name');
+        const receiptStoreAddressElement = document.getElementById('receipt-store-address');
+        const receiptStorePhoneElement = document.getElementById('receipt-store-phone');
+        const receiptDateElement = document.getElementById('receipt-date');
+        const receiptTransactionIdElement = document.getElementById('receipt-transaction-id');
+        const receiptItemsElement = document.getElementById('receipt-items');
+        const receiptSubtotalElement = document.getElementById('receipt-subtotal');
+        const receiptTaxElement = document.getElementById('receipt-tax');
+        const receiptTaxPercentageElement = document.getElementById('receipt-tax-percentage');
+        const receiptTotalElement = document.getElementById('receipt-total');
+        const receiptPrintArea = document.getElementById('receipt-print-area');
+
+        // DOM Elements for Custom Message Modal
+        const messageModal = document.getElementById('message-modal');
+        const closeMessageModalButton = document.getElementById('close-message-modal-button');
+        const okMessageModalButton = document.getElementById('ok-message-modal-button');
+        const messageModalTitle = document.getElementById('message-modal-title');
+        const messageModalText = document.getElementById('message-modal-text');
+
+        // DOM Elements for Navigation & Views
+        const navLinks = document.querySelectorAll('.nav-link');
+        const contentViews = document.querySelectorAll('.content-view');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const loadingMessage = document.getElementById('loading-message');
+        const mainContent = document.getElementById('main-content'); // Main content area
+
+        // DOM Elements for Manajemen Produk
+        const addProductForm = document.getElementById('add-product-form');
+        const productNameInput = document.getElementById('product-name');
+        const productPriceInput = document.getElementById('product-price');
+        const productImageInput = document.getElementById('product-image');
+        const productManagementListElement = document.getElementById('product-management-list');
+
+        // DOM Elements for Riwayat Transaksi
+        const transactionHistoryListElement = document.getElementById('transaction-history-list');
+        const emptyHistoryMessage = document.getElementById('empty-history-message');
+        
+        // DOM Elements for Laporan (Reports)
+        const generateSalesInsightsButton = document.getElementById('generate-sales-insights-button');
+        const reportOutputElement = document.getElementById('report-output');
+
+        // DOM Elements for Pengaturan (Settings)
+        const settingsForm = document.getElementById('settings-form');
+        const storeNameInput = document.getElementById('store-name');
+        const storeAddressInput = document.getElementById('store-address');
+        const storePhoneInput = document.getElementById('store-phone');
+        const storeLogoUrlInput = document.getElementById('store-logo-url');
+        const taxRateInput = document.getElementById('tax-rate');
+        const deleteAccountButton = document.getElementById('delete-account-button'); // New button
+
+        // DOM Elements for Auth
+        const authModal = document.getElementById('auth-modal');
+        const authTitle = document.getElementById('auth-title');
+        const authForm = document.getElementById('auth-form');
+        const authEmailInput = document.getElementById('auth-email');
+        const authPasswordInput = document.getElementById('auth-password');
+        const authSubmitButton = document.getElementById('auth-submit-button');
+        const switchToRegisterLink = document.getElementById('switch-to-register');
+        const switchToLoginLink = document.getElementById('switch-to-login');
+        const switchToLoginContainer = document.getElementById('switch-to-login-container');
+        const logoutButton = document.getElementById('logout-button');
+        const loginRegisterButton = document.getElementById('login-register-button');
+        const userIdDisplay = document.getElementById('user-id-display');
+        const userEmailDisplay = document.getElementById('user-email-display');
+
+        // DOM Elements for Delete Account Modal
+        const deleteAccountModal = document.getElementById('delete-account-modal');
+        const closeDeleteAccountModalButton = document.getElementById('close-delete-account-modal-button');
+        const deleteAccountForm = document.getElementById('delete-account-form');
+        const deleteAccountPasswordInput = document.getElementById('delete-account-password');
+        const cancelDeleteAccountButton = document.getElementById('cancel-delete-account-button');
+
+        let isRegisterMode = false; // State for auth modal
+
+        // --- Utility Functions ---
+        /**
+         * Formats a number as Indonesian Rupiah currency.
+         * @param {number} amount - The amount to format.
+         * @returns {string} The formatted currency string.
+         */
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount);
+        }
+
+        /**
+         * Displays a loading overlay with an optional message.
+         * @param {string} message - The message to display.
+         */
+        function showLoading(message = 'Memuat data...') {
+            loadingMessage.textContent = message;
+            loadingOverlay.style.display = 'flex';
+        }
+
+        /**
+         * Hides the loading overlay.
+         */
+        function hideLoading() {
+            loadingOverlay.style.display = 'none';
+        }
+
+        /**
+         * Displays a custom message modal.
+         * @param {string} message - The message text.
+         * @param {'info'|'success'|'error'|'warning'} type - The type of message (influences title and color).
+         * @param {string} title - The title of the message modal.
+         */
+        function showCustomMessage(message, type = 'info', title = '') {
+            messageModalText.textContent = message;
+            if (type === 'success') {
+                messageModalTitle.textContent = title || 'Berhasil!';
+                messageModalTitle.classList.remove('text-red-600', 'text-yellow-600', 'text-gray-800');
+                messageModalTitle.classList.add('text-green-600');
+            } else if (type === 'error') {
+                messageModalTitle.textContent = title || 'Terjadi Kesalahan!';
+                messageModalTitle.classList.remove('text-green-600', 'text-yellow-600', 'text-gray-800');
+                messageModalTitle.classList.add('text-red-600');
+            } else if (type === 'warning') {
+                messageModalTitle.textContent = title || 'Peringatan!';
+                messageModalTitle.classList.remove('text-green-600', 'text-red-600', 'text-gray-800');
+                messageModalTitle.classList.add('text-yellow-600');
+            } else {
+                messageModalTitle.textContent = title || 'Informasi';
+                messageModalTitle.classList.remove('text-green-600', 'text-red-600', 'text-yellow-600');
+                messageModalTitle.classList.add('text-gray-800');
+            }
+            messageModal.style.display = 'flex';
+        }
+
+        // Event listeners for closing message modal
+        closeMessageModalButton.onclick = () => messageModal.style.display = 'none';
+        okMessageModalButton.onclick = () => messageModal.style.display = 'none';
+
+        // --- Firebase Initialization and Authentication ---
+        /**
+         * Initializes Firebase and sets up authentication listener.
+         */
+        async function initializeFirebase() {
+            try {
+                showLoading('Menginisialisasi aplikasi...');
+                // Use the provided firebaseConfig directly
+                const firebaseConfig = {
+                    apiKey: "AIzaSyA8yPAu9TZ59iiuWNvfn8ZNELOR7n2qPLA",
+                    authDomain: "kasir-9e759.firebaseapp.com",
+                    projectId: "kasir-9e759",
+                    storageBucket: "kasir-9e759.firebasestorage.app",
+                    messagingSenderId: "690011765793",
+                    appId: "1:690011765793:web:7a56ae0bf2e92712f07760",
+                    measurementId: "G-KRS4X2S7ND"
+                };
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                // Listen for authentication state changes
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        userEmail = user.email || 'Anonim';
+                        userIdDisplay.textContent = `User ID: ${userId}`;
+                        userEmailDisplay.textContent = `Email: ${userEmail}`;
+                        logoutButton.style.display = 'block';
+                        loginRegisterButton.style.display = 'none';
+                        mainContent.style.display = 'block'; // Show main content after auth
+                        isAuthReady = true;
+                        await loadSettings(); // Load settings once user is authenticated
+                        setupFirestoreListeners(); // Start listening to Firestore collections
+                    } else {
+                        // Not authenticated, try to sign in anonymously
+                        userId = null;
+                        userEmail = null;
+                        userIdDisplay.textContent = 'User ID: Tidak Login';
+                        userEmailDisplay.textContent = '';
+                        logoutButton.style.display = 'none';
+                        loginRegisterButton.style.display = 'block';
+                        mainContent.style.display = 'none'; // Hide main content
+                        isAuthReady = false;
+                        showAuthModal(); // Prompt for login/register
+                        // Clear any existing data if not authenticated
+                        products = [];
+                        cart = [];
+                        transactions = [];
+                        renderProducts();
+                        renderCart();
+                        renderProductManagementList();
+                        renderTransactionHistory();
+                        reportOutputElement.innerHTML = '<p class="text-gray-500">Hasil laporan akan ditampilkan di sini.</p>';
+                    }
+                    hideLoading();
+                });
+
+                // Attempt custom token sign-in if available (for Canvas environment)
+                const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                if (initialAuthToken) {
+                    try {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                    } catch (customTokenError) {
+                        console.warn("Custom token sign-in failed, attempting anonymous sign-in:", customTokenError);
+                        // Fallback to anonymous sign-in if custom token fails
+                        await signInAnonymously(auth);
+                    }
+                } else {
+                    // If no custom token, sign in anonymously to get a UID
+                    await signInAnonymously(auth);
+                }
+
+            } catch (error) {
+                console.error("Error initializing Firebase:", error);
+                // Specifically check for auth/admin-restricted-operation for better user guidance
+                if (error.code === 'auth/admin-restricted-operation') {
+                    showCustomMessage(`Gagal menginisialisasi autentikasi. Pastikan "Anonymous" diaktifkan di metode masuk Firebase Authentication Anda.`, 'error', 'Error Autentikasi');
+                } else {
+                    showCustomMessage(`Gagal menginisialisasi aplikasi: ${error.message}`, 'error', 'Error Inisialisasi');
+                }
+                hideLoading();
+            }
+        }
+
+        /**
+         * Shows the authentication modal.
+         */
+        function showAuthModal() {
+            authModal.style.display = 'flex';
+            authModal.classList.add('animate-fade-in'); // Optional: Add a fade-in animation
+        }
+
+        /**
+         * Hides the authentication modal.
+         */
+        function hideAuthModal() {
+            authModal.style.display = 'none';
+        }
+
+        // Event listener for login/register button
+        loginRegisterButton.addEventListener('click', () => {
+            isRegisterMode = false;
+            authTitle.textContent = 'Login';
+            authSubmitButton.textContent = 'Login';
+            switchToRegisterLink.style.display = 'inline';
+            switchToLoginContainer.style.display = 'none';
+            authForm.reset();
+            showAuthModal();
+        });
+
+        // Event listener for logout button
+        logoutButton.addEventListener('click', async () => {
+            try {
+                showLoading('Logging out...');
+                await signOut(auth);
+                showCustomMessage('Anda telah berhasil logout.', 'success', 'Logout Berhasil');
+            } catch (error) {
+                console.error("Error logging out:", error);
+                showCustomMessage(`Gagal logout: ${error.message}`, 'error', 'Logout Gagal');
+            } finally {
+                hideLoading();
+            }
+        });
+
+        // Event listener to switch to register mode
+        switchToRegisterLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            isRegisterMode = true;
+            authTitle.textContent = 'Daftar Akun Baru';
+            authSubmitButton.textContent = 'Daftar';
+            switchToRegisterLink.style.display = 'none';
+            switchToLoginContainer.style.display = 'block';
+            authForm.reset();
+        });
+
+        // Event listener to switch to login mode
+        switchToLoginLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            isRegisterMode = false;
+            authTitle.textContent = 'Login';
+            authSubmitButton.textContent = 'Login';
+            switchToRegisterLink.style.display = 'inline';
+            switchToLoginContainer.style.display = 'none';
+            authForm.reset();
+        });
+
+        // Event listener for auth form submission
+        authForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = authEmailInput.value;
+            const password = authPasswordInput.value;
+
+            if (!email || !password) {
+                showCustomMessage('Email dan password harus diisi.', 'warning', 'Input Tidak Lengkap');
+                return;
+            }
+
+            showLoading(isRegisterMode ? 'Mendaftar...' : 'Login...');
+            try {
+                if (isRegisterMode) {
+                    await createUserWithEmailAndPassword(auth, email, password);
+                    showCustomMessage('Pendaftaran berhasil! Anda sekarang dapat login.', 'success', 'Pendaftaran Berhasil');
+                } else {
+                    await signInWithEmailAndPassword(auth, email, password);
+                    showCustomMessage('Login berhasil!', 'success', 'Login Berhasil');
+                }
+                hideAuthModal(); // Close modal on successful auth
+            } catch (error) {
+                console.error("Authentication error:", error);
+                let errorMessage = 'Terjadi kesalahan autentikasi.';
+                if (error.code === 'auth/email-already-in-use') {
+                    errorMessage = 'Email sudah terdaftar. Silakan login atau gunakan email lain.';
+                } else if (error.code === 'auth/invalid-email') {
+                    errorMessage = 'Format email tidak valid.';
+                } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                    errorMessage = 'Email atau password salah.';
+                } else if (error.code === 'auth/weak-password') {
+                    errorMessage = 'Password terlalu lemah. Minimal 6 karakter.';
+                }
+                showCustomMessage(errorMessage, 'error', 'Autentikasi Gagal');
+            } finally {
+                hideLoading();
+            }
+        });
+
+        // --- Firestore Listeners ---
+        /**
+         * Sets up real-time listeners for products, transactions, and settings.
+         */
+        function setupFirestoreListeners() {
+            if (!isAuthReady || !userId) {
+                console.warn("Firestore listeners not set up: User not authenticated or auth not ready.");
+                return;
+            }
+
+            // Products Listener
+            const productsCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/products`);
+            onSnapshot(productsCollectionRef, (snapshot) => {
+                products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderProducts();
+                renderProductManagementList();
+            }, (error) => {
+                console.error("Error fetching products:", error);
+                showCustomMessage("Gagal memuat daftar produk.", 'error', 'Error Data Produk');
+            });
+
+            // Transactions Listener
+            const transactionsCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/transactions`);
+            onSnapshot(transactionsCollectionRef, (snapshot) => {
+                transactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                // Sort transactions by timestamp in descending order
+                transactions.sort((a, b) => b.timestamp - a.timestamp);
+                renderTransactionHistory();
+            }, (error) => {
+                console.error("Error fetching transactions:", error);
+                showCustomMessage("Gagal memuat riwayat transaksi.", 'error', 'Error Riwayat Transaksi');
+            });
+
+            // Settings Listener
+            const settingsDocRef = doc(db, `artifacts/${appId}/users/${userId}/settings/appSettings`);
+            onSnapshot(settingsDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    appSettings = { ...appSettings, ...docSnap.data() };
+                    applySettingsToUI();
+                } else {
+                    // If settings don't exist, save default settings
+                    saveSettings();
+                }
+            }, (error) => {
+                console.error("Error fetching settings:", error);
+                showCustomMessage("Gagal memuat pengaturan aplikasi.", 'error', 'Error Pengaturan');
+            });
+        }
+
+        // --- Navigation Logic ---
+        navLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                // Remove active class from all links
+                navLinks.forEach(nav => nav.classList.remove('active'));
+                // Add active class to the clicked link
+                this.classList.add('active');
+
+                // Hide all content views
+                contentViews.forEach(view => view.classList.remove('active'));
+                // Show the selected content view
+                const targetViewId = this.dataset.view;
+                document.getElementById(`view-${targetViewId}`).classList.add('active');
+            });
+        });
+
+        // --- Settings Functions ---
+        /**
+         * Loads application settings from Firestore and populates the form.
+         */
+        async function loadSettings() {
+            if (!isAuthReady || !userId) {
+                console.warn("Cannot load settings: User not authenticated or auth not ready.");
+                return;
+            }
+            try {
+                const settingsDocRef = doc(db, `artifacts/${appId}/users/${userId}/settings/appSettings`);
+                const docSnap = await getDoc(settingsDocRef);
+                if (docSnap.exists()) {
+                    appSettings = { ...appSettings, ...docSnap.data() };
+                } else {
+                    // If no settings exist, save the default ones
+                    await setDoc(settingsDocRef, appSettings);
+                }
+                applySettingsToUI();
+            } catch (error) {
+                console.error("Error loading settings:", error);
+                showCustomMessage(`Gagal memuat pengaturan: ${error.message}`, 'error', 'Error Pengaturan');
+            }
+        }
+
+        /**
+         * Applies loaded settings to the UI elements.
+         */
+        function applySettingsToUI() {
+            storeNameInput.value = appSettings.storeName;
+            storeAddressInput.value = appSettings.storeAddress;
+            storePhoneInput.value = appSettings.storePhone;
+            storeLogoUrlInput.value = appSettings.storeLogoUrl;
+            taxRateInput.value = appSettings.taxRate;
+
+            // Update display in Kasir view
+            taxPercentageDisplay.textContent = appSettings.taxRate;
+
+            // Update receipt modal elements
+            receiptLogoElement.src = appSettings.storeLogoUrl;
+            receiptStoreNameElement.textContent = appSettings.storeName;
+            receiptStoreAddressElement.textContent = appSettings.storeAddress;
+            receiptStorePhoneElement.textContent = appSettings.storePhone;
+            receiptTaxPercentageElement.textContent = appSettings.taxRate;
+
+            calculateTotals(); // Recalculate totals with new tax rate
+        }
+
+        /**
+         * Saves application settings to Firestore.
+         */
+        settingsForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!isAuthReady || !userId) {
+                showCustomMessage("Anda harus login untuk menyimpan pengaturan.", 'warning', 'Autentikasi Diperlukan');
+                return;
+            }
+
+            const newSettings = {
+                storeName: storeNameInput.value,
+                storeAddress: storeAddressInput.value,
+                storePhone: storePhoneInput.value,
+                storeLogoUrl: storeLogoUrlInput.value,
+                taxRate: parseFloat(taxRateInput.value)
+            };
+
+            // Basic validation
+            if (!newSettings.storeName || !newSettings.storeAddress || isNaN(newSettings.taxRate)) {
+                showCustomMessage('Nama toko, alamat, dan tingkat pajak harus diisi dengan benar.', 'warning', 'Input Tidak Valid');
+                return;
+            }
+
+            showLoading('Menyimpan pengaturan...');
+            try {
+                const settingsDocRef = doc(db, `artifacts/${appId}/users/${userId}/settings/appSettings`);
+                await setDoc(settingsDocRef, newSettings);
+                appSettings = newSettings; // Update local settings immediately
+                applySettingsToUI(); // Apply changes to UI
+                showCustomMessage('Pengaturan berhasil disimpan!', 'success', 'Pengaturan Tersimpan');
+            } catch (error) {
+                console.error("Error saving settings:", error);
+                showCustomMessage(`Gagal menyimpan pengaturan: ${error.message}`, 'error', 'Error Penyimpanan');
+            } finally {
+                hideLoading();
+            }
+        });
+
+        // --- Delete Account Functions ---
+        deleteAccountButton.addEventListener('click', () => {
+            if (!auth.currentUser || auth.currentUser.isAnonymous) {
+                showCustomMessage('Anda harus login dengan akun terdaftar (bukan anonim) untuk menghapus akun.', 'warning', 'Tidak Diizinkan');
+                return;
+            }
+            deleteAccountModal.style.display = 'flex';
+            deleteAccountPasswordInput.value = ''; // Clear password field
+        });
+
+        closeDeleteAccountModalButton.onclick = () => deleteAccountModal.style.display = 'none';
+        cancelDeleteAccountButton.onclick = () => deleteAccountModal.style.display = 'none';
+
+        deleteAccountForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const password = deleteAccountPasswordInput.value;
+            await deleteUserAccount(password);
+        });
+
+        async function deleteUserAccount(password) {
+            const user = auth.currentUser;
+            if (!user) {
+                showCustomMessage('Tidak ada pengguna yang sedang login.', 'error', 'Kesalahan Autentikasi');
+                return;
+            }
+
+            showLoading('Menghapus akun...');
+            try {
+                // 1. Re-authenticate user for sensitive operation
+                const credential = EmailAuthProvider.credential(user.email, password);
+                await reauthenticateWithCredential(user, credential);
+
+                // 2. Delete user's data from Firestore
+                const collectionsToDelete = ['products', 'transactions', 'settings'];
+                const batch = writeBatch(db);
+
+                for (const collectionName of collectionsToDelete) {
+                    const collectionRef = collection(db, `artifacts/${appId}/users/${userId}/${collectionName}`);
+                    const snapshot = await getDocs(collectionRef); // Use getDocs from 'firebase/firestore'
+                    snapshot.docs.forEach(doc => {
+                        batch.delete(doc.ref);
+                    });
+                }
+                await batch.commit();
+
+                // 3. Delete the user account from Authentication
+                await deleteUser(user);
+
+                showCustomMessage('Akun Anda dan semua data terkait telah berhasil dihapus.', 'success', 'Akun Dihapus');
+                deleteAccountModal.style.display = 'none';
+            } catch (error) {
+                console.error("Error deleting account:", error);
+                let errorMessage = 'Gagal menghapus akun. Mohon coba lagi.';
+                if (error.code === 'auth/requires-recent-login') {
+                    errorMessage = 'Tindakan ini memerlukan login baru-baru ini. Silakan logout dan login kembali, lalu coba hapus akun.';
+                } else if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                    errorMessage = 'Kata sandi salah. Mohon periksa kembali.';
+                } else if (error.code === 'auth/user-mismatch') {
+                    errorMessage = 'Pengguna yang mencoba menghapus akun tidak cocok dengan pengguna yang sedang login.';
+                }
+                showCustomMessage(errorMessage, 'error', 'Gagal Hapus Akun');
+            } finally {
+                hideLoading();
+            }
+        }
+        // Need to import getDocs for the delete function.
+        import { getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+
+        // --- Product Management Functions ---
+        /**
+         * Renders the list of products in the "Kasir" view.
+         */
+        function renderProducts() {
+            productListElement.innerHTML = ''; // Clear existing products
+            if (products.length === 0) {
+                productListElement.innerHTML = '<p class="text-gray-500 col-span-full text-center">Belum ada produk. Tambahkan di Manajemen Produk.</p>';
+                return;
+            }
+
+            products.forEach(product => {
+                const productCard = document.createElement('div');
+                productCard.className = 'product-card bg-white rounded-lg shadow-md p-4 cursor-pointer hover:shadow-lg';
+                productCard.innerHTML = `
+                    <img src="${product.imageUrl || 'https://placehold.co/150x150/e2e8f0/4a5568?text=Produk'}" alt="${product.name}" class="w-full h-32 object-cover rounded-md mb-3" onerror="this.onerror=null;this.src='https://placehold.co/150x150/cccccc/ffffff?text=Error';">
+                    <h4 class="text-lg font-semibold text-gray-800 truncate mb-1">${product.name}</h4>
+                    <p class="text-indigo-600 font-bold">${formatCurrency(product.price)}</p>
+                `;
+                productCard.addEventListener('click', () => addToCart(product));
+                productListElement.appendChild(productCard);
+            });
+        }
+
+        /**
+         * Renders the list of products in the "Manajemen Produk" view.
+         */
+        function renderProductManagementList() {
+            productManagementListElement.innerHTML = ''; // Clear existing list
+            if (products.length === 0) {
+                productManagementListElement.innerHTML = '<p class="text-gray-500 text-center">Belum ada produk.</p>';
+                return;
+            }
+
+            products.forEach(product => {
+                const productItem = document.createElement('div');
+                productItem.className = 'flex items-center justify-between bg-gray-50 p-3 rounded-md shadow-sm';
+                productItem.innerHTML = `
+                    <div class="flex-1">
+                        <p class="font-medium text-gray-800">${product.name}</p>
+                        <p class="text-sm text-gray-600">${formatCurrency(product.price)}</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button data-id="${product.id}" data-name="${product.name}" data-price="${product.price}" data-image="${product.imageUrl || ''}" class="edit-product-btn bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded-md text-xs">
+                            Edit
+                        </button>
+                        <button data-id="${product.id}" class="delete-product-btn btn-danger">
+                            Hapus
+                        </button>
+                    </div>
+                `;
+                productManagementListElement.appendChild(productItem);
+            });
+
+            // Add event listeners for edit and delete buttons
+            document.querySelectorAll('.edit-product-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const id = e.target.dataset.id;
+                    const name = e.target.dataset.name;
+                    const price = parseFloat(e.target.dataset.price);
+                    const imageUrl = e.target.dataset.image;
+                    editProduct(id, name, price, imageUrl);
+                });
+            });
+
+            document.querySelectorAll('.delete-product-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const id = e.target.dataset.id;
+                    deleteProduct(id);
+                });
+            });
+        }
+
+        /**
+         * Adds a new product to Firestore.
+         */
+        addProductForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!isAuthReady || !userId) {
+                showCustomMessage("Anda harus login untuk menambah produk.", 'warning', 'Autentikasi Diperlukan');
+                return;
+            }
+
+            const name = productNameInput.value.trim();
+            const price = parseFloat(productPriceInput.value);
+            const imageUrl = productImageInput.value.trim();
+
+            if (!name || isNaN(price) || price < 0) {
+                showCustomMessage('Nama produk dan harga harus diisi dengan benar.', 'warning', 'Input Tidak Valid');
+                return;
+            }
+
+            showLoading('Menambah produk...');
+            try {
+                await addDoc(collection(db, `artifacts/${appId}/users/${userId}/products`), {
+                    name,
+                    price,
+                    imageUrl,
+                    createdAt: Date.now()
+                });
+                showCustomMessage('Produk berhasil ditambahkan!', 'success', 'Produk Ditambahkan');
+                addProductForm.reset();
+            } catch (error) {
+                console.error("Error adding product:", error);
+                showCustomMessage(`Gagal menambahkan produk: ${error.message}`, 'error', 'Error Tambah Produk');
+            } finally {
+                hideLoading();
+            }
+        });
+
+        /**
+         * Edits an existing product in Firestore.
+         * @param {string} id - The document ID of the product.
+         * @param {string} currentName - Current product name.
+         * @param {number} currentPrice - Current product price.
+         * @param {string} currentImageUrl - Current product image URL.
+         */
+        async function editProduct(id, currentName, currentPrice, currentImageUrl) {
+            const newName = prompt(`Edit nama produk (saat ini: ${currentName}):`, currentName);
+            if (newName === null) return; // User cancelled
+
+            const newPriceStr = prompt(`Edit harga produk (saat ini: ${currentPrice}):`, currentPrice.toString());
+            if (newPriceStr === null) return; // User cancelled
+            const newPrice = parseFloat(newPriceStr);
+
+            const newImageUrl = prompt(`Edit URL gambar produk (saat ini: ${currentImageUrl || 'kosong'}):`, currentImageUrl || '');
+            if (newImageUrl === null) return; // User cancelled
+
+            if (!newName.trim() || isNaN(newPrice) || newPrice < 0) {
+                showCustomMessage('Nama produk dan harga harus diisi dengan benar untuk mengedit.', 'warning', 'Input Tidak Valid');
+                return;
+            }
+
+            showLoading('Mengedit produk...');
+            try {
+                const productDocRef = doc(db, `artifacts/${appId}/users/${userId}/products`, id);
+                await setDoc(productDocRef, {
+                    name: newName.trim(),
+                    price: newPrice,
+                    imageUrl: newImageUrl.trim()
+                }, { merge: true }); // Use merge to only update specified fields
+                showCustomMessage('Produk berhasil diperbarui!', 'success', 'Produk Diperbarui');
+            } catch (error) {
+                console.error("Error editing product:", error);
+                showCustomMessage(`Gagal memperbarui produk: ${error.message}`, 'error', 'Error Edit Produk');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        /**
+         * Deletes a product from Firestore.
+         * @param {string} id - The document ID of the product to delete.
+         */
+        async function deleteProduct(id) {
+            const confirmDelete = window.confirm('Apakah Anda yakin ingin menghapus produk ini?'); // Using window.confirm for simplicity, replace with custom modal if needed
+            if (!confirmDelete) return;
+
+            if (!isAuthReady || !userId) {
+                showCustomMessage("Anda harus login untuk menghapus produk.", 'warning', 'Autentikasi Diperlukan');
+                return;
+            }
+
+            showLoading('Menghapus produk...');
+            try {
+                await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/products`, id));
+                showCustomMessage('Produk berhasil dihapus!', 'success', 'Produk Dihapus');
+            } catch (error) {
+                console.error("Error deleting product:", error);
+                showCustomMessage(`Gagal menghapus produk: ${error.message}`, 'error', 'Error Hapus Produk');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // --- Cart and POS Functions ---
+        /**
+         * Adds a product to the shopping cart or increases its quantity.
+         * @param {Object} product - The product object to add.
+         */
+        function addToCart(product) {
+            const existingItem = cart.find(item => item.id === product.id);
+            if (existingItem) {
+                existingItem.quantity++;
+            } else {
+                cart.push({ ...product, quantity: 1 });
+            }
+            renderCart();
+            calculateTotals();
+        }
+
+        /**
+         * Updates the quantity of a product in the cart.
+         * @param {string} productId - The ID of the product in the cart.
+         * @param {number} newQuantity - The new quantity.
+         */
+        function updateCartItemQuantity(productId, newQuantity) {
+            const itemIndex = cart.findIndex(item => item.id === productId);
+            if (itemIndex > -1) {
+                if (newQuantity <= 0) {
+                    cart.splice(itemIndex, 1); // Remove if quantity is 0 or less
+                } else {
+                    cart[itemIndex].quantity = newQuantity;
+                }
+            }
+            renderCart();
+            calculateTotals();
+        }
+
+        /**
+         * Removes a product from the cart.
+         * @param {string} productId - The ID of the product to remove.
+         */
+        function removeCartItem(productId) {
+            cart = cart.filter(item => item.id !== productId);
+            renderCart();
+            calculateTotals();
+        }
+
+        /**
+         * Renders the current items in the shopping cart.
+         */
+        function renderCart() {
+            cartItemsElement.innerHTML = '';
+            if (cart.length === 0) {
+                emptyCartMessage.style.display = 'block';
+                payButton.disabled = true;
+                clearCartButton.disabled = true;
+            } else {
+                emptyCartMessage.style.display = 'none';
+                payButton.disabled = false;
+                clearCartButton.disabled = false;
+                cart.forEach(item => {
+                    const cartItemDiv = document.createElement('div');
+                    cartItemDiv.className = 'flex items-center justify-between bg-gray-50 p-3 rounded-md shadow-sm';
+                    cartItemDiv.innerHTML = `
+                        <div class="flex-1">
+                            <p class="font-medium text-gray-800">${item.name}</p>
+                            <p class="text-sm text-gray-600">${formatCurrency(item.price)} x ${item.quantity}</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button data-id="${item.id}" data-action="decrease" class="cart-qty-btn bg-gray-200 text-gray-700 w-7 h-7 rounded-full flex items-center justify-center hover:bg-gray-300">-</button>
+                            <span class="font-semibold">${item.quantity}</span>
+                            <button data-id="${item.id}" data-action="increase" class="cart-qty-btn bg-gray-200 text-gray-700 w-7 h-7 rounded-full flex items-center justify-center hover:bg-gray-300">+</button>
+                            <button data-id="${item.id}" class="remove-from-cart-btn btn-danger ml-2">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    `;
+                    cartItemsElement.appendChild(cartItemDiv);
+                });
+
+                // Add event listeners for quantity buttons
+                document.querySelectorAll('.cart-qty-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const id = e.target.dataset.id;
+                        const action = e.target.dataset.action;
+                        const item = cart.find(i => i.id === id);
+                        if (item) {
+                            let newQty = item.quantity;
+                            if (action === 'increase') {
+                                newQty++;
+                            } else if (action === 'decrease') {
+                                newQty--;
+                            }
+                            updateCartItemQuantity(id, newQty);
+                        }
+                    });
+                });
+
+                // Add event listeners for remove buttons
+                document.querySelectorAll('.remove-from-cart-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const id = e.target.dataset.id || e.target.closest('button').dataset.id; // Handle icon click
+                        removeCartItem(id);
+                    });
+                });
+            }
+        }
+
+        /**
+         * Calculates and updates subtotal, tax, and total prices.
+         */
+        function calculateTotals() {
+            let subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            let tax = subtotal * (appSettings.taxRate / 100);
+            let total = subtotal + tax;
+
+            subtotalPriceElement.textContent = formatCurrency(subtotal);
+            taxPriceElement.textContent = formatCurrency(tax);
+            totalPriceElement.textContent = formatCurrency(total);
+
+            // Enable/disable pay and clear cart buttons
+            payButton.disabled = cart.length === 0;
+            clearCartButton.disabled = cart.length === 0;
+        }
+
+        /**
+         * Handles the payment process.
+         */
+        payButton.addEventListener('click', async () => {
+            if (cart.length === 0) {
+                showCustomMessage('Keranjang belanja kosong!', 'warning', 'Keranjang Kosong');
+                return;
+            }
+            if (!isAuthReady || !userId) {
+                showCustomMessage("Anda harus login untuk melakukan transaksi.", 'warning', 'Autentikasi Diperlukan');
+                return;
+            }
+
+            showLoading('Memproses pembayaran...');
+            const totalAmount = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0) * (1 + appSettings.taxRate / 100);
+            
+            try {
+                const transactionData = {
+                    timestamp: Date.now(),
+                    items: cart.map(item => ({
+                        id: item.id,
+                        name: item.name,
+                        price: item.price,
+                        quantity: item.quantity,
+                        subtotal: item.price * item.quantity
+                    })),
+                    subtotal: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+                    taxRate: appSettings.taxRate,
+                    taxAmount: totalAmount - cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+                    total: totalAmount,
+                    userId: userId
+                };
+
+                const docRef = await addDoc(collection(db, `artifacts/${appId}/users/${userId}/transactions`), transactionData);
+                lastTransaction = { id: docRef.id, ...transactionData }; // Store for receipt
+                showCustomMessage('Pembayaran berhasil!', 'success', 'Pembayaran Berhasil');
+                modalTotalPaidElement.textContent = formatCurrency(totalAmount);
+                paymentModal.style.display = 'flex';
+                cart = []; // Clear cart after successful payment
+                renderCart();
+                calculateTotals();
+            } catch (error) {
+                console.error("Error processing payment:", error);
+                showCustomMessage(`Gagal memproses pembayaran: ${error.message}`, 'error', 'Pembayaran Gagal');
+            } finally {
+                hideLoading();
+            }
+        });
+
+        /**
+         * Clears all items from the shopping cart.
+         */
+        clearCartButton.addEventListener('click', () => {
+            if (cart.length === 0) {
+                showCustomMessage('Keranjang sudah kosong.', 'info', 'Info');
+                return;
+            }
+            const confirmClear = window.confirm('Apakah Anda yakin ingin mengosongkan keranjang?'); // Using window.confirm for simplicity
+            if (confirmClear) {
+                cart = [];
+                renderCart();
+                calculateTotals();
+                showCustomMessage('Keranjang berhasil dikosongkan.', 'info', 'Keranjang Dikosongkan');
+            }
+        });
+
+        // --- Payment Modal Event Listeners ---
+        closeModalButton.onclick = () => paymentModal.style.display = 'none';
+        confirmPaymentAndCloseButton.onclick = () => paymentModal.style.display = 'none';
+        viewReceiptButton.onclick = () => {
+            paymentModal.style.display = 'none'; // Hide payment modal
+            if (lastTransaction) {
+                generateReceipt(lastTransaction);
+                receiptModal.style.display = 'flex';
+            } else {
+                showCustomMessage('Tidak ada transaksi terakhir untuk struk.', 'warning', 'Struk Tidak Tersedia');
+            }
+        };
+
+        // --- Receipt Modal Functions ---
+        /**
+         * Populates and displays the receipt modal with transaction details.
+         * @param {Object} transaction - The transaction object.
+         */
+        function generateReceipt(transaction) {
+            receiptDateElement.textContent = new Date(transaction.timestamp).toLocaleString('id-ID');
+            receiptTransactionIdElement.textContent = transaction.id;
+            receiptItemsElement.innerHTML = '';
+            transaction.items.forEach(item => {
+                const li = document.createElement('li');
+                li.className = 'flex justify-between text-sm';
+                li.innerHTML = `
+                    <span>${item.name} (${item.quantity}x)</span>
+                    <span>${formatCurrency(item.subtotal)}</span>
+                `;
+                receiptItemsElement.appendChild(li);
+            });
+
+            receiptSubtotalElement.textContent = formatCurrency(transaction.subtotal);
+            receiptTaxElement.textContent = formatCurrency(transaction.taxAmount);
+            receiptTotalElement.textContent = formatCurrency(transaction.total);
+            receiptTaxPercentageElement.textContent = appSettings.taxRate; // Update tax percentage on receipt
+
+            // Ensure store info is up-to-date
+            receiptLogoElement.src = appSettings.storeLogoUrl;
+            receiptStoreNameElement.textContent = appSettings.storeName;
+            receiptStoreAddressElement.textContent = appSettings.storeAddress;
+            receiptStorePhoneElement.textContent = appSettings.storePhone;
+        }
+
+        // Event listeners for receipt modal
+        closeReceiptModalButton.onclick = () => receiptModal.style.display = 'none';
+        closeReceiptAndFinishButton.onclick = () => receiptModal.style.display = 'none';
+        printReceiptButton.onclick = () => window.print();
+
+        /**
+         * Saves the receipt as a PDF.
+         */
+        savePdfButton.addEventListener('click', async () => {
+            if (!lastTransaction) {
+                showCustomMessage('Tidak ada struk untuk disimpan sebagai PDF.', 'warning', 'Struk Tidak Tersedia');
+                return;
+            }
+            showLoading('Membuat PDF...');
+            try {
+                // Ensure the receipt modal is visible and rendered before capturing
+                receiptModal.style.display = 'block'; // Temporarily show if hidden for capture
+                await new Promise(resolve => setTimeout(resolve, 100)); // Small delay for rendering
+
+                const canvas = await html2canvas(receiptPrintArea, {
+                    scale: 2, // Increase scale for better resolution
+                    useCORS: true // Important for images loaded from external URLs
+                });
+                const imgData = canvas.toDataURL('image/png');
+                const { jsPDF } = window.jspdf; // Get jsPDF from window object
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'px',
+                    format: [canvas.width, canvas.height] // Use canvas dimensions for PDF size
+                });
+
+                pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+                pdf.save(`struk_transaksi_${lastTransaction.id.substring(0, 8)}.pdf`);
+                showCustomMessage('Struk berhasil disimpan sebagai PDF!', 'success', 'PDF Tersimpan');
+            } catch (error) {
+                console.error("Error saving PDF:", error);
+                showCustomMessage(`Gagal menyimpan struk sebagai PDF: ${error.message}`, 'error', 'Error Simpan PDF');
+            } finally {
+                receiptModal.style.display = 'flex'; // Restore display property
+                hideLoading();
+            }
+        });
+
+        /**
+         * Saves the receipt as an image (PNG).
+         */
+        saveImageButton.addEventListener('click', async () => {
+            if (!lastTransaction) {
+                showCustomMessage('Tidak ada struk untuk disimpan sebagai gambar.', 'warning', 'Struk Tidak Tersedia');
+                return;
+            }
+            showLoading('Membuat Gambar...');
+            try {
+                // Ensure the receipt modal is visible and rendered before capturing
+                receiptModal.style.display = 'block'; // Temporarily show if hidden for capture
+                await new Promise(resolve => setTimeout(resolve, 100)); // Small delay for rendering
+
+                const canvas = await html2canvas(receiptPrintArea, {
+                    scale: 2, // Increase scale for better resolution
+                    useCORS: true // Important for images loaded from external URLs
+                });
+                const imageUrl = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.href = imageUrl;
+                link.download = `struk_transaksi_${lastTransaction.id.substring(0, 8)}.png`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showCustomMessage('Struk berhasil disimpan sebagai Gambar!', 'success', 'Gambar Tersimpan');
+            } catch (error) {
+                console.error("Error saving image:", error);
+                showCustomMessage(`Gagal menyimpan struk sebagai Gambar: ${error.message}`, 'error', 'Error Simpan Gambar');
+            } finally {
+                receiptModal.style.display = 'flex'; // Restore display property
+                hideLoading();
+            }
+        });
+
+        /**
+         * Shares the receipt using the Web Share API.
+         */
+        shareReceiptButton.addEventListener('click', async () => {
+            if (!lastTransaction) {
+                showCustomMessage('Tidak ada struk untuk dibagikan.', 'warning', 'Struk Tidak Tersedia');
+                return;
+            }
+
+            if (navigator.share) {
+                showLoading('Mempersiapkan berbagi...');
+                try {
+                    // Generate a text summary of the receipt for sharing
+                    const receiptText = `Struk Transaksi KasirKu\n\n` +
+                                       `ID Transaksi: ${lastTransaction.id.substring(0, 8)}\n` +
+                                       `Tanggal: ${new Date(lastTransaction.timestamp).toLocaleString('id-ID')}\n\n` +
+                                       `Detail Pembelian:\n` +
+                                       lastTransaction.items.map(item => `- ${item.name} (${item.quantity}x) - ${formatCurrency(item.subtotal)}`).join('\n') +
+                                       `\n\nSubtotal: ${formatCurrency(lastTransaction.subtotal)}\n` +
+                                       `Pajak (${lastTransaction.taxRate}%): ${formatCurrency(lastTransaction.taxAmount)}\n` +
+                                       `TOTAL: ${formatCurrency(lastTransaction.total)}\n\n` +
+                                       `Terima kasih telah berbelanja di ${appSettings.storeName}!`;
+
+                    // Attempt to share as text
+                    await navigator.share({
+                        title: `Struk Transaksi ${appSettings.storeName}`,
+                        text: receiptText,
+                    });
+                    showCustomMessage('Struk berhasil dibagikan!', 'success', 'Berbagi Berhasil');
+                } catch (error) {
+                    console.error("Error sharing receipt:", error);
+                    // User might have cancelled the share operation, or other errors
+                    if (error.name !== 'AbortError') { // Ignore user cancellation
+                        showCustomMessage(`Gagal membagikan struk: ${error.message}`, 'error', 'Error Berbagi');
+                    }
+                } finally {
+                    hideLoading();
+                }
+            } else {
+                showCustomMessage('Fitur berbagi tidak didukung di browser Anda. Anda bisa mencoba menyimpan sebagai PDF/Gambar lalu membagikannya secara manual.', 'info', 'Fitur Tidak Tersedia');
+            }
+        });
+
+
+        // --- Transaction History Functions ---
+        /**
+         * Renders the list of past transactions.
+         */
+        function renderTransactionHistory() {
+            transactionHistoryListElement.innerHTML = '';
+            if (transactions.length === 0) {
+                emptyHistoryMessage.style.display = 'block';
+                return;
+            } else {
+                emptyHistoryMessage.style.display = 'none';
+            }
+
+            transactions.forEach(transaction => {
+                const transactionCard = document.createElement('div');
+                transactionCard.className = 'bg-white p-4 rounded-lg shadow-md';
+                transactionCard.innerHTML = `
+                    <div class="flex justify-between items-center mb-2">
+                        <h4 class="font-semibold text-lg text-indigo-700">Transaksi ID: ${transaction.id.substring(0, 8)}...</h4>
+                        <span class="text-sm text-gray-500">${new Date(transaction.timestamp).toLocaleString('id-ID')}</span>
+                    </div>
+                    <ul class="list-disc list-inside text-sm text-gray-700 mb-2">
+                        ${transaction.items.map(item => `<li>${item.name} (${item.quantity}x) - ${formatCurrency(item.subtotal)}</li>`).join('')}
+                    </ul>
+                    <div class="border-t border-gray-200 pt-2 flex justify-between text-md font-bold">
+                        <span>Total:</span>
+                        <span>${formatCurrency(transaction.total)}</span>
+                    </div>
+                    <button data-transaction-id="${transaction.id}" class="view-transaction-receipt-btn btn-secondary mt-3 text-xs py-1 px-3">
+                        Lihat Struk
+                    </button>
+                `;
+                transactionHistoryListElement.appendChild(transactionCard);
+            });
+
+            // Add event listeners for "Lihat Struk" buttons
+            document.querySelectorAll('.view-transaction-receipt-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const transactionId = e.target.dataset.transactionId;
+                    const transaction = transactions.find(t => t.id === transactionId);
+                    if (transaction) {
+                        generateReceipt(transaction);
+                        receiptModal.style.display = 'flex';
+                    } else {
+                        showCustomMessage('Detail transaksi tidak ditemukan.', 'error', 'Error');
+                    }
+                });
+            });
+        }
+
+        // --- Sales Report Functions (LLM Integration) ---
+        /**
+         * Generates sales insights using the Gemini API.
+         */
+        generateSalesInsightsButton.addEventListener('click', async () => {
+            if (!isAuthReady || !userId) {
+                showCustomMessage("Anda harus login untuk membuat laporan.", 'warning', 'Autentikasi Diperlukan');
+                return;
+            }
+            if (transactions.length === 0) {
+                showCustomMessage('Tidak ada data transaksi untuk membuat laporan.', 'info', 'Data Kosong');
+                reportOutputElement.innerHTML = '<p class="text-gray-500">Tidak ada data transaksi untuk membuat laporan.</p>';
+                return;
+            }
+
+            showLoading('Menganalisis data penjualan...');
+            try {
+                // Prepare transaction data for the LLM
+                const transactionSummary = transactions.map(t => ({
+                    date: new Date(t.timestamp).toLocaleDateString('id-ID'),
+                    total: t.total,
+                    items: t.items.map(item => `${item.name} (${item.quantity}x)`).join(', ')
+                }));
+
+                const prompt = `Berikut adalah data transaksi penjualan:
+                ${JSON.stringify(transactionSummary, null, 2)}
+
+                Berdasarkan data di atas, berikan analisis singkat mengenai tren penjualan, produk terlaris, dan saran untuk meningkatkan penjualan. Sajikan dalam format yang mudah dibaca (misalnya, poin-poin atau paragraf singkat). Bahasa Indonesia.`;
+
+                let chatHistory = [];
+                chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+                const payload = { contents: chatHistory };
+                const apiKey = ""; // Leave as-is, Canvas will provide it
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const text = result.candidates[0].content.parts[0].text;
+                    reportOutputElement.innerHTML = `<h3 class="text-lg font-semibold mb-2">Analisis Penjualan:</h3><div class="prose max-w-none">${text.replace(/\n/g, '<br>')}</div>`;
+                } else {
+                    reportOutputElement.innerHTML = '<p class="text-red-500">Gagal mendapatkan analisis penjualan dari AI. Coba lagi.</p>';
+                    console.error("LLM response structure unexpected:", result);
+                }
+            } catch (error) {
+                console.error("Error generating sales insights:", error);
+                reportOutputElement.innerHTML = `<p class="text-red-500">Terjadi kesalahan saat membuat laporan: ${error.message}</p>`;
+            } finally {
+                hideLoading();
+            }
+        });
+
+        // --- Initial Load ---
+        window.onload = initializeFirebase; // Initialize Firebase when the window loads
+
+        // Initial rendering of empty cart and product list (will be updated by Firestore listeners)
+        renderCart();
+        renderProducts();
+        renderProductManagementList();
+        renderTransactionHistory();
+    </script>
+</body>
+</html>
