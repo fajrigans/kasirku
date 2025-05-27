@@ -1692,7 +1692,8 @@
                 let chatHistory = [];
                 chatHistory.push({ role: "user", parts: [{ text: prompt }] });
                 const payload = { contents: chatHistory };
-                const apiKey = ""; // Leave as-is, Canvas will provide it
+                // Mengganti placeholder API key dengan kunci yang diberikan pengguna
+                const apiKey = "AIzaSyB7a9rERcNmFQ86yPxPFj_neUUdW8LQAG0"; 
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
                 const response = await fetch(apiUrl, {
