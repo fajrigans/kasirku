@@ -22,6 +22,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2416145413528363"
+     crossorigin="anonymous"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -195,11 +197,31 @@
         #auth-modal .modal-content, #delete-account-modal .modal-content {
             max-width: 450px;
         }
+
+        /* Responsive sidebar styles */
+        #sidebar {
+            transform: translateX(-100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        #sidebar.open {
+            transform: translateX(0);
+        }
+        @media (min-width: 1024px) { /* lg breakpoint */
+            #sidebar {
+                transform: translateX(0); /* Always visible on desktop */
+            }
+            #sidebar-toggle {
+                display: none !important; /* Hide toggle button on desktop */
+            }
+            #sidebar-overlay {
+                display: none !important; /* Hide overlay on desktop */
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
     <div class="flex h-screen overflow-hidden">
-        <nav id="sidebar" class="w-64 bg-gray-800 text-gray-200 p-5 space-y-3 flex-shrink-0 overflow-y-auto">
+        <nav id="sidebar" class="w-64 bg-gray-800 text-gray-200 p-5 space-y-3 flex-shrink-0 overflow-y-auto fixed h-full z-50 lg:static">
             <h1 class="text-2xl font-bold text-white mb-6 text-center">Kaspocket</h1>
             <a data-view="kasir" class="nav-link active"><i class="fas fa-cash-register"></i>Kasir</a>
             <a data-view="manajemen-produk" class="nav-link"><i class="fas fa-box-open"></i>Manajemen Produk</a>
@@ -220,155 +242,226 @@
             </div>
         </nav>
 
-        <main id="main-content" class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto" style="display: none;">
-            <div id="view-kasir" class="content-view active">
-                <header class="mb-6">
-                    <h2 class="text-3xl font-bold text-indigo-600">Point of Sale</h2>
-                </header>
-                <div class="flex flex-col lg:flex-row gap-6">
-                    <div class="lg:w-3/5">
-                        <h3 class="text-2xl font-semibold mb-4 text-gray-700">Pilih Produk</h3>
-                        <div id="product-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                        </div>
-                    </div>
-                    <div class="lg:w-2/5">
-                        <div class="bg-white p-6 rounded-lg shadow-xl">
-                            <h3 class="text-2xl font-semibold mb-4 border-b pb-2 text-indigo-600">Keranjang Belanja</h3>
-                            <div id="cart-items" class="cart-items-container max-h-60 overflow-y-auto mb-4 space-y-2">
-                                <p id="empty-cart-message" class="text-gray-500">Keranjang masih kosong.</p>
-                            </div>
-                            <div class="border-t pt-4">
-                                <div class="flex justify-between items-center mb-2">
-                                    <span class="text-lg font-medium text-gray-700">Subtotal:</span>
-                                    <span id="subtotal-price" class="text-lg font-semibold text-gray-900">Rp 0</span>
-                                </div>
-                                <div class="flex justify-between items-center mb-4">
-                                    <span class="text-lg font-medium text-gray-700">Pajak (<span id="tax-percentage-display">10</span>%):</span>
-                                    <span id="tax-price" class="text-lg font-semibold text-gray-900">Rp 0</span>
-                                </div>
-                                <div class="flex justify-between items-center text-xl font-bold text-indigo-700 mb-6">
-                                    <span>Total:</span>
-                                    <span id="total-price">Rp 0</span>
-                                </div>
-                                <button id="pay-button" class="w-full btn-primary py-3" disabled>
-                                    Bayar Sekarang
-                                </button>
-                                <button id="clear-cart-button" class="w-full btn-danger py-3 mt-3" disabled>
-                                    Kosongkan Keranjang
-                                </button>
+        <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden"></div>
+
+        <main id="main-content" class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+            <button id="sidebar-toggle" class="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-md bg-indigo-600 text-white shadow-lg">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <div id="authenticated-content" style="display: none;">
+                <div id="view-kasir" class="content-view active">
+                    <header class="mb-6">
+                        <h2 class="text-3xl font-bold text-indigo-600">Point of Sale</h2>
+                    </header>
+                    <div class="flex flex-col lg:flex-row gap-6">
+                        <div class="lg:w-3/5">
+                            <h3 class="text-2xl font-semibold mb-4 text-gray-700">Pilih Produk</h3>
+                            <div id="product-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-4">
                             </div>
                         </div>
+                        <div class="lg:w-2/5">
+                            <div class="bg-white p-6 rounded-lg shadow-xl">
+                                <h3 class="text-2xl font-semibold mb-4 border-b pb-2 text-indigo-600">Keranjang Belanja</h3>
+                                <div id="cart-items" class="cart-items-container max-h-60 overflow-y-auto mb-4 space-y-2">
+                                    <p id="empty-cart-message" class="text-gray-500">Keranjang masih kosong.</p>
+                                </div>
+                                <div class="border-t pt-4">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="text-lg font-medium text-gray-700">Subtotal:</span>
+                                        <span id="subtotal-price" class="text-lg font-semibold text-gray-900">Rp 0</span>
+                                    </div>
+                                    <div class="flex justify-between items-center mb-4">
+                                        <span class="text-lg font-medium text-gray-700">Pajak (<span id="tax-percentage-display">10</span>%):</span>
+                                        <span id="tax-price" class="text-lg font-semibold text-gray-900">Rp 0</span>
+                                    </div>
+                                    <div class="flex justify-between items-center text-xl font-bold text-indigo-700 mb-6">
+                                        <span>Total:</span>
+                                        <span id="total-price">Rp 0</span>
+                                    </div>
+                                    <button id="pay-button" class="w-full btn-primary py-3" disabled>
+                                        Bayar Sekarang
+                                    </button>
+                                    <button id="clear-cart-button" class="w-full btn-danger py-3 mt-3" disabled>
+                                        Kosongkan Keranjang
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="view-manajemen-produk" class="content-view">
+                    <header class="mb-6">
+                        <h2 class="text-3xl font-bold text-indigo-600">Manajemen Produk</h2>
+                    </header>
+                    <div class="bg-white p-6 rounded-lg shadow-xl mb-6">
+                        <h3 class="text-xl font-semibold mb-4 text-gray-700">Tambah Produk Baru</h3>
+                        <form id="add-product-form" class="space-y-4">
+                            <div>
+                                <label for="product-name" class="block text-sm font-medium text-gray-700">Nama Produk</label>
+                                <input type="text" id="product-name" name="product-name" class="form-input" required>
+                            </div>
+                            <div>
+                                <label for="product-price" class="block text-sm font-medium text-gray-700">Harga Produk (Rp)</label>
+                                <input type="number" id="product-price" name="product-price" class="form-input" min="0" required>
+                            </div>
+                            <div>
+                                <label for="product-image" class="block text-sm font-medium text-gray-700">URL Gambar Produk (Opsional)</label>
+                                <input type="url" id="product-image" name="product-image" class="form-input" placeholder="https://placehold.co/150x150/...">
+                            </div>
+                            <button type="submit" class="btn-primary">Tambah Produk</button>
+                        </form>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-xl">
+                        <h3 class="text-xl font-semibold mb-4 text-gray-700">Daftar Produk Tersedia</h3>
+                        <div id="product-management-list" class="product-management-list max-h-96 overflow-y-auto space-y-3">
+                            </div>
+                    </div>
+                </div>
+
+                <div id="view-riwayat" class="content-view">
+                    <header class="mb-6">
+                        <h2 class="text-3xl font-bold text-indigo-600">Riwayat Transaksi</h2>
+                    </header>
+                    <div class="bg-white p-6 rounded-lg shadow-xl">
+                        <div id="transaction-history-list" class="transaction-history-list max-h-[70vh] overflow-y-auto space-y-4">
+                            <p id="empty-history-message" class="text-gray-500">Belum ada riwayat transaksi.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="view-laporan" class="content-view">
+                    <header class="mb-6">
+                        <h2 class="text-3xl font-bold text-indigo-600">Laporan Penjualan</h2>
+                    </header>
+                    <div class="bg-white p-6 rounded-lg shadow-xl">
+                        <p class="text-gray-600">Fitur laporan (harian, mingguan, bulanan) sedang dalam pengembangan.</p>
+                        <div class="mt-4">
+                            <button class="btn-secondary mr-2">Laporan Harian</button>
+                            <button class="btn-secondary mr-2">Laporan Mingguan</button>
+                            <button class="btn-secondary">Laporan Bulanan</button>
+                        </div>
+                        <button id="generate-sales-insights-button" class="btn-primary mt-6">Generate Sales Insights ✨</button>
+                        <div id="report-output" class="mt-6 p-4 border rounded-md bg-gray-50 min-h-[200px]">
+                            <p class="text-gray-500">Hasil laporan akan ditampilkan di sini.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="view-pengaturan" class="content-view">
+                    <header class="mb-6">
+                        <h2 class="text-3xl font-bold text-indigo-600">Pengaturan Aplikasi</h2>
+                    </header>
+                    <div class="bg-white p-6 rounded-lg shadow-xl mb-6">
+                        <h3 class="text-xl font-semibold mb-4 text-gray-700">Pengaturan Struk & Toko</h3>
+                        <form id="settings-form" class="space-y-4">
+                            <div>
+                                <label for="store-name" class="block text-sm font-medium text-gray-700">Nama Toko</label>
+                                <input type="text" id="store-name" name="store-name" class="form-input" required>
+                            </div>
+                            <div>
+                                <label for="store-address" class="block text-sm font-medium text-gray-700">Alamat Toko</label>
+                                <input type="text" id="store-address" name="store-address" class="form-input" required>
+                            </div>
+                            <div>
+                                <label for="store-phone" class="block text-sm font-medium text-gray-700">Nomor Telepon Toko</label>
+                                <input type="tel" id="store-phone" name="store-phone" class="form-input">
+                            </div>
+                            <div>
+                                <label for="store-logo-url" class="block text-sm font-medium text-gray-700">URL Logo Toko</label>
+                                <input type="url" id="store-logo-url" name="store-logo-url" class="form-input" placeholder="https://placehold.co/100x50/...">
+                                <p class="text-xs text-gray-500 mt-1">Gunakan URL gambar logo. Ukuran optimal sekitar 100x50 piksel.</p>
+                            </div>
+                            <div>
+                                <label for="tax-rate" class="block text-sm font-medium text-gray-700">Tingkat Pajak (%)</label>
+                                <input type="number" id="tax-rate" name="tax-rate" class="form-input" min="0" max="100" step="0.1" required>
+                                <p class="text-xs text-gray-500 mt-1">Masukkan persentase pajak (misal: 10 untuk 10%).</p>
+                            </div>
+                            <button type="submit" class="btn-primary">Simpan Pengaturan</button>
+                        </form>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-xl mt-6">
+                        <h3 class="text-xl font-semibold mb-4 text-gray-700">Kelola Akun</h3>
+                        <p class="text-gray-600 mb-4">Hapus akun Anda secara permanen beserta semua data produk dan transaksi.</p>
+                        <button id="delete-account-button" class="btn-danger py-2 px-4">
+                            <i class="fas fa-user-times mr-2"></i> Hapus Akun Saya
+                        </button>
                     </div>
                 </div>
             </div>
 
-            <div id="view-manajemen-produk" class="content-view">
-                <header class="mb-6">
-                    <h2 class="text-3xl font-bold text-indigo-600">Manajemen Produk</h2>
-                </header>
-                <div class="bg-white p-6 rounded-lg shadow-xl mb-6">
-                    <h3 class="text-xl font-semibold mb-4 text-gray-700">Tambah Produk Baru</h3>
-                    <form id="add-product-form" class="space-y-4">
-                        <div>
-                            <label for="product-name" class="block text-sm font-medium text-gray-700">Nama Produk</label>
-                            <input type="text" id="product-name" name="product-name" class="form-input" required>
-                        </div>
-                        <div>
-                            <label for="product-price" class="block text-sm font-medium text-gray-700">Harga Produk (Rp)</label>
-                            <input type="number" id="product-price" name="product-price" class="form-input" min="0" required>
-                        </div>
-                        <div>
-                            <label for="product-image" class="block text-sm font-medium text-gray-700">URL Gambar Produk (Opsional)</label>
-                            <input type="url" id="product-image" name="product-image" class="form-input" placeholder="https://placehold.co/150x150/...">
-                        </div>
-                        <button type="submit" class="btn-primary">Tambah Produk</button>
-                    </form>
-                </div>
-                <div class="bg-white p-6 rounded-lg shadow-xl">
-                    <h3 class="text-xl font-semibold mb-4 text-gray-700">Daftar Produk Tersedia</h3>
-                    <div id="product-management-list" class="product-management-list max-h-96 overflow-y-auto space-y-3">
-                        </div>
-                </div>
-            </div>
-
-            <div id="view-riwayat" class="content-view">
-                <header class="mb-6">
-                    <h2 class="text-3xl font-bold text-indigo-600">Riwayat Transaksi</h2>
-                </header>
-                <div class="bg-white p-6 rounded-lg shadow-xl">
-                    <div id="transaction-history-list" class="transaction-history-list max-h-[70vh] overflow-y-auto space-y-4">
-                        <p id="empty-history-message" class="text-gray-500">Belum ada riwayat transaksi.</p>
-                    </div>
-                </div>
-            </div>
-
-            <div id="view-laporan" class="content-view">
-                <header class="mb-6">
-                    <h2 class="text-3xl font-bold text-indigo-600">Laporan Penjualan</h2>
-                </header>
-                <div class="bg-white p-6 rounded-lg shadow-xl">
-                    <p class="text-gray-600">Fitur laporan (harian, mingguan, bulanan) sedang dalam pengembangan.</p>
-                    <div class="mt-4">
-                        <button class="btn-secondary mr-2">Laporan Harian</button>
-                        <button class="btn-secondary mr-2">Laporan Mingguan</button>
-                        <button class="btn-secondary">Laporan Bulanan</button>
-                    </div>
-                    <button id="generate-sales-insights-button" class="btn-primary mt-6">Generate Sales Insights ✨</button>
-                    <div id="report-output" class="mt-6 p-4 border rounded-md bg-gray-50 min-h-[200px]">
-                        <p class="text-gray-500">Hasil laporan akan ditampilkan di sini.</p>
-                    </div>
-                </div>
-            </div>
-
-            <div id="view-pengaturan" class="content-view">
-                <header class="mb-6">
-                    <h2 class="text-3xl font-bold text-indigo-600">Pengaturan Aplikasi</h2>
-                </header>
-                <div class="bg-white p-6 rounded-lg shadow-xl mb-6">
-                    <h3 class="text-xl font-semibold mb-4 text-gray-700">Pengaturan Struk & Toko</h3>
-                    <form id="settings-form" class="space-y-4">
-                        <div>
-                            <label for="store-name" class="block text-sm font-medium text-gray-700">Nama Toko</label>
-                            <input type="text" id="store-name" name="store-name" class="form-input" required>
-                        </div>
-                        <div>
-                            <label for="store-address" class="block text-sm font-medium text-gray-700">Alamat Toko</label>
-                            <input type="text" id="store-address" name="store-address" class="form-input" required>
-                        </div>
-                        <div>
-                            <label for="store-phone" class="block text-sm font-medium text-gray-700">Nomor Telepon Toko</label>
-                            <input type="tel" id="store-phone" name="store-phone" class="form-input">
-                        </div>
-                        <div>
-                            <label for="store-logo-url" class="block text-sm font-medium text-gray-700">URL Logo Toko</label>
-                            <input type="url" id="store-logo-url" name="store-logo-url" class="form-input" placeholder="https://placehold.co/100x50/...">
-                            <p class="text-xs text-gray-500 mt-1">Gunakan URL gambar logo. Ukuran optimal sekitar 100x50 piksel.</p>
-                        </div>
-                        <div>
-                            <label for="tax-rate" class="block text-sm font-medium text-gray-700">Tingkat Pajak (%)</label>
-                            <input type="number" id="tax-rate" name="tax-rate" class="form-input" min="0" max="100" step="0.1" required>
-                            <p class="text-xs text-gray-500 mt-1">Masukkan persentase pajak (misal: 10 untuk 10%).</p>
-                        </div>
-                        <button type="submit" class="btn-primary">Simpan Pengaturan</button>
-                    </form>
-                </div>
-                <div class="bg-white p-6 rounded-lg shadow-xl mt-6">
-                    <h3 class="text-xl font-semibold mb-4 text-gray-700">Kelola Akun</h3>
-                    <p class="text-gray-600 mb-4">Hapus akun Anda secara permanen beserta semua data produk dan transaksi.</p>
-                    <button id="delete-account-button" class="btn-danger py-2 px-4">
-                        <i class="fas fa-user-times mr-2"></i> Hapus Akun Saya
-                    </button>
-                </div>
+            <div id="unauthenticated-message" class="text-center p-10 bg-white rounded-lg shadow-xl" style="display: none;">
+                <h2 class="text-3xl font-bold text-indigo-600 mb-4">Selamat Datang di Kaspocket!</h2>
+                <p class="text-lg text-gray-700 mb-6">
+                    Aplikasi kasir lengkap untuk mengelola produk, transaksi, dan laporan penjualan Anda.
+                </p>
+                <p class="text-md text-gray-600 mb-8">
+                    Untuk memulai, silakan login atau daftar akun baru.
+                </p>
+                <button id="show-auth-modal-from-main" class="btn-primary py-3 px-6 text-lg">
+                    Login / Daftar Sekarang
+                </button>
             </div>
         </main>
     </div>
 
     <div id="payment-modal" class="modal">
         <div class="modal-content">
-            <span id="close-modal-button" class="modal-close-button">&times;</span>
+            <span id="close-payment-modal-button" class="modal-close-button">&times;</span> <h3 class="text-2xl font-semibold mb-4 text-indigo-600">Lakukan Pembayaran</h3>
+            <div class="mb-4">
+                <p class="text-lg font-medium text-gray-700">Total Pembelian:</p>
+                <span id="modal-total-to-pay" class="text-3xl font-bold text-indigo-700">Rp 0</span>
+            </div>
+
+            <div class="mb-4 text-left">
+                <label for="amount-paid" class="block text-sm font-medium text-gray-700 mb-2">Jumlah Dibayar (Rp)</label>
+                <input type="number" id="amount-paid" class="form-input text-xl text-center" placeholder="Masukkan jumlah uang" min="0" required>
+                <p id="payment-error-message" class="text-red-500 text-sm mt-1 hidden">Jumlah dibayar kurang dari total.</p>
+            </div>
+
+            <div class="mb-6 text-left">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Metode Pembayaran</label>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    <label class="flex items-center p-2 border rounded-md cursor-pointer hover:bg-gray-50">
+                        <input type="radio" name="payment-method" value="Tunai" class="form-radio text-indigo-600" checked>
+                        <span class="ml-2 text-sm">Tunai</span>
+                    </label>
+                    <label class="flex items-center p-2 border rounded-md cursor-pointer hover:bg-gray-50">
+                        <input type="radio" name="payment-method" value="Debit" class="form-radio text-indigo-600">
+                        <span class="ml-2 text-sm">Debit</span>
+                    </label>
+                    <label class="flex items-center p-2 border rounded-md cursor-pointer hover:bg-gray-50">
+                        <input type="radio" name="payment-method" value="Kredit" class="form-radio text-indigo-600">
+                        <span class="ml-2 text-sm">Kredit</span>
+                    </label>
+                    <label class="flex items-center p-2 border rounded-md cursor-pointer hover:bg-gray-50">
+                        <input type="radio" name="payment-method" value="QRIS" class="form-radio text-indigo-600">
+                        <span class="ml-2 text-sm">QRIS</span>
+                    </label>
+                    <label class="flex items-center p-2 border rounded-md cursor-pointer hover:bg-gray-50">
+                        <input type="radio" name="payment-method" value="E-Wallet" class="form-radio text-indigo-600">
+                        <span class="ml-2 text-sm">E-Wallet</span>
+                    </label>
+                    <label class="flex items-center p-2 border rounded-md cursor-pointer hover:bg-gray-50">
+                        <input type="radio" name="payment-method" value="Transfer Bank" class="form-radio text-indigo-600">
+                        <span class="ml-2 text-sm">Transfer Bank</span>
+                    </label>
+                </div>
+            </div>
+
+            <button id="process-payment-button" class="w-full btn-primary py-3">
+                Proses Pembayaran
+            </button>
+        </div>
+    </div>
+
+    <div id="payment-success-modal" class="modal"> <div class="modal-content">
+            <span id="close-success-modal-button" class="modal-close-button">&times;</span>
             <h3 class="text-2xl font-semibold mb-4 text-green-600">Pembayaran Berhasil!</h3>
             <i class="fas fa-check-circle text-green-500 text-5xl mb-4"></i>
-            <p class="text-gray-700 mb-2">Total yang dibayarkan: <span id="modal-total-paid" class="font-bold"></span></p>
+            <p class="text-gray-700 mb-2">Total yang dibayarkan: <span id="modal-success-total-paid" class="font-bold"></span></p>
+            <p class="text-gray-700 mb-2">Kembalian: <span id="modal-change-amount" class="font-bold"></span></p>
             <p class="text-gray-600">Terima kasih telah berbelanja.</p>
             <button id="view-receipt-button" class="mt-6 btn-primary">
                 Lihat Struk
@@ -392,6 +485,7 @@
                 <div class="border-t border-b border-gray-300 py-2 mb-4">
                     <p class="text-sm">Tanggal: <span id="receipt-date"></span></p>
                     <p class="text-sm">ID Transaksi: <span id="receipt-transaction-id"></span></p>
+                    <p class="text-sm">Metode Pembayaran: <span id="receipt-payment-method"></span></p>
                 </div>
                 <div class="mb-4">
                     <h3 class="text-md font-semibold mb-2">Detail Pembelian:</h3>
@@ -410,6 +504,14 @@
                     <div class="flex justify-between text-lg font-bold mt-2">
                         <span>TOTAL:</span>
                         <span id="receipt-total"></span>
+                    </div>
+                    <div class="flex justify-between text-sm mt-2">
+                        <span>Jumlah Dibayar:</span>
+                        <span id="receipt-amount-paid"></span>
+                    </div>
+                    <div class="flex justify-between text-lg font-bold mt-1 text-green-700">
+                        <span>Kembalian:</span>
+                        <span id="receipt-change"></span>
                     </div>
                 </div>
                 <div class="text-center text-xs text-gray-600">
@@ -502,6 +604,8 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, signInWithCustomToken, signInAnonymously, reauthenticateWithCredential, EmailAuthProvider, deleteUser } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, query, onSnapshot, addDoc, doc, deleteDoc, setDoc, getDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
 
         // Global variables for Firebase and data
         let db;
@@ -539,41 +643,54 @@
         const taxPercentageDisplay = document.getElementById('tax-percentage-display');
 
 
-        // DOM Elements for Payment Modal
-        const paymentModal = document.getElementById('payment-modal');
-        // FIX: Removed erroneous 'document =' assignment
-        const closeModalButton = document.getElementById('close-modal-button');
-        const viewReceiptButton = document.getElementById('view-receipt-button');
-        const confirmPaymentAndCloseButton = document.getElementById('confirm-payment-and-close-button');
-        const modalTotalPaidElement = document.getElementById('modal-total-paid');
+        // DOM Elements for Payment Modal (renamed to payment-input-modal for clarity)
+        const paymentInputModal = document.getElementById('payment-modal'); // Renamed
+        let closePaymentModalButton; // Declared with let
+        const modalTotalToPayElement = document.getElementById('modal-total-to-pay'); // New
+        const amountPaidInput = document.getElementById('amount-paid'); // New
+        const paymentErrorMessage = document.getElementById('payment-error-message'); // New
+        let processPaymentButton; // Declared with let
+        const paymentMethodRadios = document.querySelectorAll('input[name="payment-method"]'); // New
+
+        // DOM Elements for Payment Success Modal (new modal)
+        const paymentSuccessModal = document.getElementById('payment-success-modal');
+        let closeSuccessModalButton; // Declared with let
+        let modalSuccessTotalPaidElement; // Declared with let
+        let modalChangeAmountElement; // Declared with let
+        let viewReceiptButton; // Declared with let
+        let confirmPaymentAndCloseButton; // Declared with let
+
 
         // DOM Elements for Receipt Modal
         const receiptModal = document.getElementById('receipt-modal');
-        const closeReceiptModalButton = document.getElementById('close-receipt-modal-button');
-        const printReceiptButton = document.getElementById('print-receipt-button');
-        const savePdfButton = document.getElementById('save-pdf-button');
-        const saveImageButton = document.getElementById('save-image-button');
-        const shareReceiptButton = document.getElementById('share-receipt-button');
-        const closeReceiptAndFinishButton = document.getElementById('close-receipt-and-finish-button');
-        const receiptLogoElement = document.getElementById('receipt-logo');
-        const receiptStoreNameElement = document.getElementById('receipt-store-name');
-        const receiptStoreAddressElement = document.getElementById('receipt-store-address');
-        const receiptStorePhoneElement = document.getElementById('receipt-store-phone');
-        const receiptDateElement = document.getElementById('receipt-date');
-        const receiptTransactionIdElement = document.getElementById('receipt-transaction-id');
-        const receiptItemsElement = document.getElementById('receipt-items');
-        const receiptSubtotalElement = document.getElementById('receipt-subtotal');
-        const receiptTaxElement = document.getElementById('receipt-tax');
-        const receiptTaxPercentageElement = document.getElementById('receipt-tax-percentage');
-        const receiptTotalElement = document.getElementById('receipt-total');
-        const receiptPrintArea = document.getElementById('receipt-print-area');
+        let closeReceiptModalButton; // Declared with let
+        let printReceiptButton; // Declared with let
+        let savePdfButton; // Declared with let
+        let saveImageButton; // Declared with let
+        let shareReceiptButton; // Declared with let
+        let closeReceiptAndFinishButton; // Declared with let
+        let receiptLogoElement; // Declared with let
+        let receiptStoreNameElement; // Declared with let
+        let receiptStoreAddressElement; // Declared with let
+        let receiptStorePhoneElement; // Declared with let
+        let receiptDateElement; // Declared with let
+        let receiptTransactionIdElement; // Declared with let
+        let receiptPaymentMethodElement; // Declared with let
+        let receiptItemsElement; // Declared with let
+        let receiptSubtotalElement; // Declared with let
+        let receiptTaxElement; // Declared with let
+        let receiptTaxPercentageElement; // Declared with let
+        let receiptTotalElement; // Declared with let
+        let receiptAmountPaidElement; // Declared with let
+        let receiptChangeElement; // Declared with let
+        let receiptPrintArea; // Declared with let
 
         // DOM Elements for Custom Message Modal
         const messageModal = document.getElementById('message-modal');
-        const closeMessageModalButton = document.getElementById('close-message-modal-button');
-        const okMessageModalButton = document.getElementById('ok-message-modal-button');
-        const messageModalTitle = document.getElementById('message-modal-title');
-        const messageModalText = document.getElementById('message-modal-text');
+        let closeMessageModalButton_msg; // Renamed to avoid conflict
+        let okMessageModalButton;
+        let messageModalTitle;
+        let messageModalText;
 
         // DOM Elements for Navigation & Views
         const navLinks = document.querySelectorAll('.nav-link');
@@ -581,6 +698,10 @@
         const loadingOverlay = document.getElementById('loading-overlay');
         const loadingMessage = document.getElementById('loading-message');
         const mainContent = document.getElementById('main-content'); // Main content area
+        const authenticatedContent = document.getElementById('authenticated-content');
+        const unauthenticatedMessage = document.getElementById('unauthenticated-message');
+        let showAuthModalFromMainButton;
+
 
         // DOM Elements for Manajemen Produk
         const addProductForm = document.getElementById('add-product-form');
@@ -604,7 +725,7 @@
         const storePhoneInput = document.getElementById('store-phone');
         const storeLogoUrlInput = document.getElementById('store-logo-url');
         const taxRateInput = document.getElementById('tax-rate');
-        const deleteAccountButton = document.getElementById('delete-account-button'); // New button
+        let deleteAccountButton; // Declared with let
 
         // DOM Elements for Auth
         const authModal = document.getElementById('auth-modal');
@@ -612,21 +733,27 @@
         const authForm = document.getElementById('auth-form');
         const authEmailInput = document.getElementById('auth-email');
         const authPasswordInput = document.getElementById('auth-password');
-        const authSubmitButton = document.getElementById('auth-submit-button');
-        const switchToRegisterLink = document.getElementById('switch-to-register');
-        const switchToLoginLink = document.getElementById('switch-to-login');
-        const switchToLoginContainer = document.getElementById('switch-to-login-container');
-        const logoutButton = document.getElementById('logout-button');
-        const loginRegisterButton = document.getElementById('login-register-button');
+        let authSubmitButton; // Declared with let
+        let switchToRegisterLink; // Declared with let
+        let switchToLoginLink; // Declared with let
+        let switchToLoginContainer; // Declared with let
+        let logoutButton; // Declared with let
+        let loginRegisterButton; // Declared with let
         const userIdDisplay = document.getElementById('user-id-display');
         const userEmailDisplay = document.getElementById('user-email-display');
 
         // DOM Elements for Delete Account Modal
         const deleteAccountModal = document.getElementById('delete-account-modal');
-        const closeDeleteAccountModalButton = document.getElementById('close-delete-account-modal-button');
+        let closeDeleteAccountModalButton; // Declared with let
         const deleteAccountForm = document.getElementById('delete-account-form');
         const deleteAccountPasswordInput = document.getElementById('delete-account-password');
-        const cancelDeleteAccountButton = document.getElementById('cancel-delete-account-button');
+        let cancelDeleteAccountButton; // Declared with let
+
+        // DOM Elements for Responsive Sidebar
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+
 
         let isRegisterMode = false; // State for auth modal
 
@@ -684,10 +811,6 @@
             messageModal.style.display = 'flex';
         }
 
-        // Event listeners for closing message modal
-        closeMessageModalButton.onclick = () => messageModal.style.display = 'none';
-        okMessageModalButton.onclick = () => messageModal.style.display = 'none';
-
         // --- Firebase Initialization and Authentication ---
         /**
          * Initializes Firebase and sets up authentication listener.
@@ -711,6 +834,7 @@
 
                 // Listen for authentication state changes
                 onAuthStateChanged(auth, async (user) => {
+                    console.log("onAuthStateChanged triggered. User:", user); // Log user object for debugging
                     if (user) {
                         userId = user.uid;
                         userEmail = user.email || 'Anonim';
@@ -718,52 +842,76 @@
                         userEmailDisplay.textContent = `Email: ${userEmail}`;
                         logoutButton.style.display = 'block';
                         loginRegisterButton.style.display = 'none';
-                        mainContent.style.display = 'block'; // Show main content after auth
+                        authenticatedContent.style.display = 'block'; // Show authenticated content
+                        unauthenticatedMessage.style.display = 'none'; // Hide unauthenticated message
+                        mainContent.style.display = 'block'; // Ensure main content is visible
                         isAuthReady = true;
-                        await loadSettings(); // Load settings once user is authenticated
-                        setupFirestoreListeners(); // Start listening to Firestore collections
+                        // Only load settings and setup listeners if auth is genuinely ready
+                        if (user && userId) {
+                            await loadSettings();
+                            setupFirestoreListeners();
+                        } else {
+                            console.warn("User object or userId is null/undefined after auth state change, skipping data load.");
+                        }
                     } else {
-                        // Not authenticated, try to sign in anonymously
+                        // Not authenticated
                         userId = null;
                         userEmail = null;
                         userIdDisplay.textContent = 'User ID: Tidak Login';
                         userEmailDisplay.textContent = '';
                         logoutButton.style.display = 'none';
                         loginRegisterButton.style.display = 'block';
-                        mainContent.style.display = 'none'; // Hide main content
+                        authenticatedContent.style.display = 'none'; // Hide authenticated content
+                        unauthenticatedMessage.style.display = 'block'; // Show unauthenticated message
+                        mainContent.style.display = 'block'; // Ensure main content is visible even if unauthenticated
                         isAuthReady = false;
-                        showAuthModal(); // Prompt for login/register
+                        // showAuthModal(); // Prompt for login/register - removed from here, triggered by button
                         // Clear any existing data if not authenticated
                         products = [];
                         cart = [];
                         transactions = [];
-                        renderProducts();
-                        renderCart();
-                        renderProductManagementList();
-                        renderTransactionHistory();
+                        renderProducts(); // Initial render for unauthenticated state
+                        renderCart(); // Initial render for unauthenticated state
+                        renderProductManagementList(); // Initial render for unauthenticated state
+                        renderTransactionHistory(); // Initial render for unauthenticated state
                         reportOutputElement.innerHTML = '<p class="text-gray-500">Hasil laporan akan ditampilkan di sini.</p>';
                     }
+                    hideLoading();
+                }, (error) => {
+                    // Error callback for onAuthStateChanged
+                    console.error("Error in onAuthStateChanged listener:", error);
+                    showCustomMessage(`Terjadi kesalahan saat memuat status autentikasi: ${error.message}`, 'error', 'Error Autentikasi');
                     hideLoading();
                 });
 
                 // Attempt custom token sign-in if available (for Canvas environment)
                 const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
                 if (initialAuthToken) {
+                    console.log("Attempting sign-in with custom token...");
                     try {
                         await signInWithCustomToken(auth, initialAuthToken);
+                        console.log("Signed in with custom token successfully.");
                     } catch (customTokenError) {
-                        console.warn("Custom token sign-in failed, attempting anonymous sign-in:", customTokenError);
+                        console.warn("Custom token sign-in failed:", customTokenError.code, customTokenError.message);
+                        // Provide more specific message for invalid custom token
+                        if (customTokenError.code === 'auth/invalid-custom-token' || customTokenError.code === 'auth/invalid-credential') {
+                            showCustomMessage('Sesi Anda mungkin telah kedaluwarsa atau tidak valid. Silakan login atau daftar.', 'warning', 'Sesi Tidak Valid');
+                        }
                         // Fallback to anonymous sign-in if custom token fails
+                        console.log("Attempting anonymous sign-in as fallback...");
                         await signInAnonymously(auth);
+                        console.log("Signed in anonymously.");
                     }
                 } else {
-                    // If no custom token, sign in anonymously to get a UID
+                    // If no custom token (e.g., running outside Canvas or token not provided), sign in anonymously
+                    console.log("No custom token found, attempting anonymous sign-in...");
                     await signInAnonymously(auth);
+                    console.log("Signed in anonymously.");
                 }
 
             } catch (error) {
-                console.error("Error initializing Firebase:", error);
-                // Specifically check for auth/admin-restricted-operation for better user guidance
+                console.error("Error initializing Firebase application:", error);
+                // More specific error message for common initialization issues
                 if (error.code === 'auth/admin-restricted-operation') {
                     showCustomMessage(`Gagal menginisialisasi autentikasi. Pastikan "Anonymous" diaktifkan di metode masuk Firebase Authentication Anda.`, 'error', 'Error Autentikasi');
                 } else {
@@ -787,92 +935,6 @@
         function hideAuthModal() {
             authModal.style.display = 'none';
         }
-
-        // Event listener for login/register button
-        loginRegisterButton.addEventListener('click', () => {
-            isRegisterMode = false;
-            authTitle.textContent = 'Login';
-            authSubmitButton.textContent = 'Login';
-            switchToRegisterLink.style.display = 'inline';
-            switchToLoginContainer.style.display = 'none';
-            authForm.reset();
-            showAuthModal();
-        });
-
-        // Event listener for logout button
-        logoutButton.addEventListener('click', async () => {
-            try {
-                showLoading('Logging out...');
-                await signOut(auth);
-                showCustomMessage('Anda telah berhasil logout.', 'success', 'Logout Berhasil');
-            } catch (error) {
-                console.error("Error logging out:", error);
-                showCustomMessage(`Gagal logout: ${error.message}`, 'error', 'Logout Gagal');
-            } finally {
-                hideLoading();
-            }
-        });
-
-        // Event listener to switch to register mode
-        switchToRegisterLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            isRegisterMode = true;
-            authTitle.textContent = 'Daftar Akun Baru';
-            authSubmitButton.textContent = 'Daftar';
-            switchToRegisterLink.style.display = 'none';
-            switchToLoginContainer.style.display = 'block';
-            authForm.reset();
-        });
-
-        // Event listener to switch to login mode
-        switchToLoginLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            isRegisterMode = false;
-            authTitle.textContent = 'Login';
-            authSubmitButton.textContent = 'Login';
-            switchToRegisterLink.style.display = 'inline';
-            switchToLoginContainer.style.display = 'none';
-            authForm.reset();
-        });
-
-        // Event listener for auth form submission
-        authForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = authEmailInput.value;
-            const password = authPasswordInput.value;
-
-            if (!email || !password) {
-                showCustomMessage('Email dan password harus diisi.', 'warning', 'Input Tidak Lengkap');
-                return;
-            }
-
-            showLoading(isRegisterMode ? 'Mendaftar...' : 'Login...');
-            try {
-                if (isRegisterMode) {
-                    await createUserWithEmailAndPassword(auth, email, password);
-                    showCustomMessage('Pendaftaran berhasil! Anda sekarang dapat login.', 'success', 'Pendaftaran Berhasil');
-                } else {
-                    await signInWithEmailAndPassword(auth, email, password);
-                    showCustomMessage('Login berhasil!', 'success', 'Login Berhasil');
-                }
-                hideAuthModal(); // Close modal on successful auth
-            } catch (error) {
-                console.error("Authentication error:", error);
-                let errorMessage = 'Terjadi kesalahan autentikasi.';
-                if (error.code === 'auth/email-already-in-use') {
-                    errorMessage = 'Email sudah terdaftar. Silakan login atau gunakan email lain.';
-                } else if (error.code === 'auth/invalid-email') {
-                    errorMessage = 'Format email tidak valid.';
-                } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-                    errorMessage = 'Email atau password salah.';
-                } else if (error.code === 'auth/weak-password') {
-                    errorMessage = 'Password terlalu lemah. Minimal 6 karakter.';
-                }
-                showCustomMessage(errorMessage, 'error', 'Autentikasi Gagal');
-            } finally {
-                hideLoading();
-            }
-        });
 
         // --- Firestore Listeners ---
         /**
@@ -923,21 +985,16 @@
             });
         }
 
-        // --- Navigation Logic ---
-        navLinks.forEach(link => {
-            link.addEventListener('click', function() {
-                // Remove active class from all links
-                navLinks.forEach(nav => nav.classList.remove('active'));
-                // Add active class to the clicked link
-                this.classList.add('active');
+        // --- Responsive Sidebar Toggle Logic ---
+        function openSidebar() {
+            sidebar.classList.add('open');
+            sidebarOverlay.classList.add('active');
+        }
 
-                // Hide all content views
-                contentViews.forEach(view => view.classList.remove('active'));
-                // Show the selected content view
-                const targetViewId = this.dataset.view;
-                document.getElementById(`view-${targetViewId}`).classList.add('active');
-            });
-        });
+        function closeSidebar() {
+            sidebar.classList.remove('open');
+            sidebarOverlay.classList.remove('active');
+        }
 
         // --- Settings Functions ---
         /**
@@ -958,7 +1015,8 @@
                     await setDoc(settingsDocRef, appSettings);
                 }
                 applySettingsToUI();
-            } catch (error) {
+            }
+            catch (error) {
                 console.error("Error loading settings:", error);
                 showCustomMessage(`Gagal memuat pengaturan: ${error.message}`, 'error', 'Error Pengaturan');
             }
@@ -986,64 +1044,6 @@
 
             calculateTotals(); // Recalculate totals with new tax rate
         }
-
-        /**
-         * Saves application settings to Firestore.
-         */
-        settingsForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (!isAuthReady || !userId) {
-                showCustomMessage("Anda harus login untuk menyimpan pengaturan.", 'warning', 'Autentikasi Diperlukan');
-                return;
-            }
-
-            const newSettings = {
-                storeName: storeNameInput.value,
-                storeAddress: storeAddressInput.value,
-                storePhone: storePhoneInput.value,
-                storeLogoUrl: storeLogoUrlInput.value,
-                taxRate: parseFloat(taxRateInput.value)
-            };
-
-            // Basic validation
-            if (!newSettings.storeName || !newSettings.storeAddress || isNaN(newSettings.taxRate)) {
-                showCustomMessage('Nama toko, alamat, dan tingkat pajak harus diisi dengan benar.', 'warning', 'Input Tidak Valid');
-                return;
-            }
-
-            showLoading('Menyimpan pengaturan...');
-            try {
-                const settingsDocRef = doc(db, `artifacts/${appId}/users/${userId}/settings/appSettings`);
-                await setDoc(settingsDocRef, newSettings);
-                appSettings = newSettings; // Update local settings immediately
-                applySettingsToUI(); // Apply changes to UI
-                showCustomMessage('Pengaturan berhasil disimpan!', 'success', 'Pengaturan Tersimpan');
-            } catch (error) {
-                console.error("Error saving settings:", error);
-                showCustomMessage(`Gagal menyimpan pengaturan: ${error.message}`, 'error', 'Error Penyimpanan');
-            } finally {
-                hideLoading();
-            }
-        });
-
-        // --- Delete Account Functions ---
-        deleteAccountButton.addEventListener('click', () => {
-            if (!auth.currentUser || auth.currentUser.isAnonymous) {
-                showCustomMessage('Anda harus login dengan akun terdaftar (bukan anonim) untuk menghapus akun.', 'warning', 'Tidak Diizinkan');
-                return;
-            }
-            deleteAccountModal.style.display = 'flex';
-            deleteAccountPasswordInput.value = ''; // Clear password field
-        });
-
-        closeDeleteAccountModalButton.onclick = () => deleteAccountModal.style.display = 'none';
-        cancelDeleteAccountButton.onclick = () => deleteAccountModal.style.display = 'none';
-
-        deleteAccountForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const password = deleteAccountPasswordInput.value;
-            await deleteUserAccount(password);
-        });
 
         async function deleteUserAccount(password) {
             const user = auth.currentUser;
@@ -1091,8 +1091,6 @@
                 hideLoading();
             }
         }
-        // Need to import getDocs for the delete function.
-        import { getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 
         // --- Product Management Functions ---
@@ -1171,39 +1169,8 @@
         /**
          * Adds a new product to Firestore.
          */
-        addProductForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (!isAuthReady || !userId) {
-                showCustomMessage("Anda harus login untuk menambah produk.", 'warning', 'Autentikasi Diperlukan');
-                return;
-            }
-
-            const name = productNameInput.value.trim();
-            const price = parseFloat(productPriceInput.value);
-            const imageUrl = productImageInput.value.trim();
-
-            if (!name || isNaN(price) || price < 0) {
-                showCustomMessage('Nama produk dan harga harus diisi dengan benar.', 'warning', 'Input Tidak Valid');
-                return;
-            }
-
-            showLoading('Menambah produk...');
-            try {
-                await addDoc(collection(db, `artifacts/${appId}/users/${userId}/products`), {
-                    name,
-                    price,
-                    imageUrl,
-                    createdAt: Date.now()
-                });
-                showCustomMessage('Produk berhasil ditambahkan!', 'success', 'Produk Ditambahkan');
-                addProductForm.reset();
-            } catch (error) {
-                console.error("Error adding product:", error);
-                showCustomMessage(`Gagal menambahkan produk: ${error.message}`, 'error', 'Error Tambah Produk');
-            } finally {
-                hideLoading();
-            }
-        });
+        // Function remains, called by event listener
+        // addProductForm.addEventListener('submit', async (e) => { /* ... */ });
 
         /**
          * Edits an existing product in Firestore.
@@ -1393,92 +1360,13 @@
         }
 
         /**
-         * Handles the payment process.
-         */
-        payButton.addEventListener('click', async () => {
-            if (cart.length === 0) {
-                showCustomMessage('Keranjang belanja kosong!', 'warning', 'Keranjang Kosong');
-                return;
-            }
-            if (!isAuthReady || !userId) {
-                showCustomMessage("Anda harus login untuk melakukan transaksi.", 'warning', 'Autentikasi Diperlukan');
-                return;
-            }
-
-            showLoading('Memproses pembayaran...');
-            const totalAmount = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0) * (1 + appSettings.taxRate / 100);
-            
-            try {
-                const transactionData = {
-                    timestamp: Date.now(),
-                    items: cart.map(item => ({
-                        id: item.id,
-                        name: item.name,
-                        price: item.price,
-                        quantity: item.quantity,
-                        subtotal: item.price * item.quantity
-                    })),
-                    subtotal: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-                    taxRate: appSettings.taxRate,
-                    taxAmount: totalAmount - cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-                    total: totalAmount,
-                    userId: userId
-                };
-
-                const docRef = await addDoc(collection(db, `artifacts/${appId}/users/${userId}/transactions`), transactionData);
-                lastTransaction = { id: docRef.id, ...transactionData }; // Store for receipt
-                showCustomMessage('Pembayaran berhasil!', 'success', 'Pembayaran Berhasil');
-                modalTotalPaidElement.textContent = formatCurrency(totalAmount);
-                paymentModal.style.display = 'flex';
-                cart = []; // Clear cart after successful payment
-                renderCart();
-                calculateTotals();
-            } catch (error) {
-                console.error("Error processing payment:", error);
-                showCustomMessage(`Gagal memproses pembayaran: ${error.message}`, 'error', 'Pembayaran Gagal');
-            } finally {
-                hideLoading();
-            }
-        });
-
-        /**
-         * Clears all items from the shopping cart.
-         */
-        clearCartButton.addEventListener('click', () => {
-            if (cart.length === 0) {
-                showCustomMessage('Keranjang sudah kosong.', 'info', 'Info');
-                return;
-            }
-            const confirmClear = window.confirm('Apakah Anda yakin ingin mengosongkan keranjang?'); // Using window.confirm for simplicity
-            if (confirmClear) {
-                cart = [];
-                renderCart();
-                calculateTotals();
-                showCustomMessage('Keranjang berhasil dikosongkan.', 'info', 'Keranjang Dikosongkan');
-            }
-        });
-
-        // --- Payment Modal Event Listeners ---
-        closeModalButton.onclick = () => paymentModal.style.display = 'none';
-        confirmPaymentAndCloseButton.onclick = () => paymentModal.style.display = 'none';
-        viewReceiptButton.onclick = () => {
-            paymentModal.style.display = 'none'; // Hide payment modal
-            if (lastTransaction) {
-                generateReceipt(lastTransaction);
-                receiptModal.style.display = 'flex';
-            } else {
-                showCustomMessage('Tidak ada transaksi terakhir untuk struk.', 'warning', 'Struk Tidak Tersedia');
-            }
-        };
-
-        // --- Receipt Modal Functions ---
-        /**
          * Populates and displays the receipt modal with transaction details.
          * @param {Object} transaction - The transaction object.
          */
         function generateReceipt(transaction) {
             receiptDateElement.textContent = new Date(transaction.timestamp).toLocaleString('id-ID');
             receiptTransactionIdElement.textContent = transaction.id;
+            receiptPaymentMethodElement.textContent = transaction.paymentMethod || 'N/A'; // Display payment method
             receiptItemsElement.innerHTML = '';
             transaction.items.forEach(item => {
                 const li = document.createElement('li');
@@ -1494,6 +1382,8 @@
             receiptTaxElement.textContent = formatCurrency(transaction.taxAmount);
             receiptTotalElement.textContent = formatCurrency(transaction.total);
             receiptTaxPercentageElement.textContent = appSettings.taxRate; // Update tax percentage on receipt
+            receiptAmountPaidElement.textContent = formatCurrency(transaction.amountPaid || 0); // Display amount paid
+            receiptChangeElement.textContent = formatCurrency(transaction.change || 0); // Display change
 
             // Ensure store info is up-to-date
             receiptLogoElement.src = appSettings.storeLogoUrl;
@@ -1502,129 +1392,6 @@
             receiptStorePhoneElement.textContent = appSettings.storePhone;
         }
 
-        // Event listeners for receipt modal
-        closeReceiptModalButton.onclick = () => receiptModal.style.display = 'none';
-        closeReceiptAndFinishButton.onclick = () => receiptModal.style.display = 'none';
-        printReceiptButton.onclick = () => window.print();
-
-        /**
-         * Saves the receipt as a PDF.
-         */
-        savePdfButton.addEventListener('click', async () => {
-            if (!lastTransaction) {
-                showCustomMessage('Tidak ada struk untuk disimpan sebagai PDF.', 'warning', 'Struk Tidak Tersedia');
-                return;
-            }
-            showLoading('Membuat PDF...');
-            try {
-                // Ensure the receipt modal is visible and rendered before capturing
-                receiptModal.style.display = 'block'; // Temporarily show if hidden for capture
-                await new Promise(resolve => setTimeout(resolve, 100)); // Small delay for rendering
-
-                const canvas = await html2canvas(receiptPrintArea, {
-                    scale: 2, // Increase scale for better resolution
-                    useCORS: true // Important for images loaded from external URLs
-                });
-                const imgData = canvas.toDataURL('image/png');
-                const { jsPDF } = window.jspdf; // Get jsPDF from window object
-                const pdf = new jsPDF({
-                    orientation: 'portrait',
-                    unit: 'px',
-                    format: [canvas.width, canvas.height] // Use canvas dimensions for PDF size
-                });
-
-                pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-                pdf.save(`struk_transaksi_${lastTransaction.id.substring(0, 8)}.pdf`);
-                showCustomMessage('Struk berhasil disimpan sebagai PDF!', 'success', 'PDF Tersimpan');
-            } catch (error) {
-                console.error("Error saving PDF:", error);
-                showCustomMessage(`Gagal menyimpan struk sebagai PDF: ${error.message}`, 'error', 'Error Simpan PDF');
-            } finally {
-                receiptModal.style.display = 'flex'; // Restore display property
-                hideLoading();
-            }
-        });
-
-        /**
-         * Saves the receipt as an image (PNG).
-         */
-        saveImageButton.addEventListener('click', async () => {
-            if (!lastTransaction) {
-                showCustomMessage('Tidak ada struk untuk disimpan sebagai gambar.', 'warning', 'Struk Tidak Tersedia');
-                return;
-            }
-            showLoading('Membuat Gambar...');
-            try {
-                // Ensure the receipt modal is visible and rendered before capturing
-                receiptModal.style.display = 'block'; // Temporarily show if hidden for capture
-                await new Promise(resolve => setTimeout(resolve, 100)); // Small delay for rendering
-
-                const canvas = await html2canvas(receiptPrintArea, {
-                    scale: 2, // Increase scale for better resolution
-                    useCORS: true // Important for images loaded from external URLs
-                });
-                const imageUrl = canvas.toDataURL('image/png');
-                const link = document.createElement('a');
-                link.href = imageUrl;
-                link.download = `struk_transaksi_${lastTransaction.id.substring(0, 8)}.png`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                showCustomMessage('Struk berhasil disimpan sebagai Gambar!', 'success', 'Gambar Tersimpan');
-            } catch (error) {
-                console.error("Error saving image:", error);
-                showCustomMessage(`Gagal menyimpan struk sebagai Gambar: ${error.message}`, 'error', 'Error Simpan Gambar');
-            } finally {
-                receiptModal.style.display = 'flex'; // Restore display property
-                hideLoading();
-            }
-        });
-
-        /**
-         * Shares the receipt using the Web Share API.
-         */
-        shareReceiptButton.addEventListener('click', async () => {
-            if (!lastTransaction) {
-                showCustomMessage('Tidak ada struk untuk dibagikan.', 'warning', 'Struk Tidak Tersedia');
-                return;
-            }
-
-            if (navigator.share) {
-                showLoading('Mempersiapkan berbagi...');
-                try {
-                    // Generate a text summary of the receipt for sharing
-                    const receiptText = `Struk Transaksi Kaspocket\n\n` + // Diubah menjadi Kaspocket
-                                       `ID Transaksi: ${lastTransaction.id.substring(0, 8)}\n` +
-                                       `Tanggal: ${new Date(lastTransaction.timestamp).toLocaleString('id-ID')}\n\n` +
-                                       `Detail Pembelian:\n` +
-                                       lastTransaction.items.map(item => `- ${item.name} (${item.quantity}x) - ${formatCurrency(item.subtotal)}`).join('\n') +
-                                       `\n\nSubtotal: ${formatCurrency(lastTransaction.subtotal)}\n` +
-                                       `Pajak (${lastTransaction.taxRate}%): ${formatCurrency(lastTransaction.taxAmount)}\n` +
-                                       `TOTAL: ${formatCurrency(lastTransaction.total)}\n\n` +
-                                       `Terima kasih telah berbelanja di ${appSettings.storeName}!`;
-
-                    // Attempt to share as text
-                    await navigator.share({
-                        title: `Struk Transaksi ${appSettings.storeName}`,
-                        text: receiptText,
-                    });
-                    showCustomMessage('Struk berhasil dibagikan!', 'success', 'Berbagi Berhasil');
-                } catch (error) {
-                    console.error("Error sharing receipt:", error);
-                    // User might have cancelled the share operation, or other errors
-                    if (error.name !== 'AbortError') { // Ignore user cancellation
-                        showCustomMessage(`Gagal membagikan struk: ${error.message}`, 'error', 'Error Berbagi');
-                    }
-                } finally {
-                    hideLoading();
-                }
-            } else {
-                showCustomMessage('Fitur berbagi tidak didukung di browser Anda. Anda bisa mencoba menyimpan sebagai PDF/Gambar lalu membagikannya secara manual.', 'info', 'Fitur Tidak Tersedia');
-            }
-        });
-
-
-        // --- Transaction History Functions ---
         /**
          * Renders the list of past transactions.
          */
@@ -1674,83 +1441,563 @@
             });
         }
 
-        // --- Sales Report Functions (LLM Integration) ---
+
         /**
-         * Generates sales insights using the Gemini API.
+         * Sets up all UI event listeners.
+         * This function should be called after the DOM is fully loaded.
          */
-        generateSalesInsightsButton.addEventListener('click', async () => {
-            if (!isAuthReady || !userId) {
-                showCustomMessage("Anda harus login untuk membuat laporan.", 'warning', 'Autentikasi Diperlukan');
-                return;
+        function setupUIEventListeners() {
+            // Initialize DOM elements that are declared with `let`
+            // Message modal elements
+            closeMessageModalButton_msg = document.getElementById('close-message-modal-button');
+            okMessageModalButton = document.getElementById('ok-message-modal-button');
+            messageModalTitle = document.getElementById('message-modal-title');
+            messageModalText = document.getElementById('message-modal-text');
+
+            // Payment modal elements
+            closePaymentModalButton = document.getElementById('close-payment-modal-button');
+            processPaymentButton = document.getElementById('process-payment-button');
+
+            // Payment success modal elements
+            closeSuccessModalButton = document.getElementById('close-success-modal-button');
+            modalSuccessTotalPaidElement = document.getElementById('modal-success-total-paid');
+            modalChangeAmountElement = document.getElementById('modal-change-amount');
+            viewReceiptButton = document.getElementById('view-receipt-button');
+            confirmPaymentAndCloseButton = document.getElementById('confirm-payment-and-close-button');
+
+            // Receipt modal elements
+            closeReceiptModalButton = document.getElementById('close-receipt-modal-button');
+            printReceiptButton = document.getElementById('print-receipt-button');
+            savePdfButton = document.getElementById('save-pdf-button');
+            saveImageButton = document.getElementById('save-image-button');
+            shareReceiptButton = document.getElementById('share-receipt-button');
+            closeReceiptAndFinishButton = document.getElementById('close-receipt-and-finish-button');
+            receiptLogoElement = document.getElementById('receipt-logo');
+            receiptStoreNameElement = document.getElementById('receipt-store-name');
+            receiptStoreAddressElement = document.getElementById('receipt-store-address');
+            receiptStorePhoneElement = document.getElementById('receipt-store-phone');
+            receiptDateElement = document.getElementById('receipt-date');
+            receiptTransactionIdElement = document.getElementById('receipt-transaction-id');
+            receiptPaymentMethodElement = document.getElementById('receipt-payment-method');
+            receiptItemsElement = document.getElementById('receipt-items');
+            receiptSubtotalElement = document.getElementById('receipt-subtotal');
+            receiptTaxElement = document.getElementById('receipt-tax');
+            receiptTaxPercentageElement = document.getElementById('receipt-tax-percentage');
+            receiptTotalElement = document.getElementById('receipt-total');
+            receiptAmountPaidElement = document.getElementById('receipt-amount-paid');
+            receiptChangeElement = document.getElementById('receipt-change');
+            receiptPrintArea = document.getElementById('receipt-print-area');
+
+            // Auth related elements
+            showAuthModalFromMainButton = document.getElementById('show-auth-modal-from-main');
+            authSubmitButton = document.getElementById('auth-submit-button');
+            switchToRegisterLink = document.getElementById('switch-to-register');
+            switchToLoginLink = document.getElementById('switch-to-login');
+            switchToLoginContainer = document.getElementById('switch-to-login-container');
+            logoutButton = document.getElementById('logout-button');
+            loginRegisterButton = document.getElementById('login-register-button');
+
+            // Delete account button
+            deleteAccountButton = document.getElementById('delete-account-button');
+            closeDeleteAccountModalButton = document.getElementById('close-delete-account-modal-button');
+            cancelDeleteAccountButton = document.getElementById('cancel-delete-account-button');
+
+
+            // Message modal event listeners
+            closeMessageModalButton_msg.onclick = () => messageModal.style.display = 'none';
+            okMessageModalButton.onclick = () => messageModal.style.display = 'none';
+
+            // Sidebar toggle listeners
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', openSidebar);
+            } else {
+                console.error("Element with ID 'sidebar-toggle' not found.");
             }
-            if (transactions.length === 0) {
-                showCustomMessage('Tidak ada data transaksi untuk membuat laporan.', 'info', 'Data Kosong');
-                reportOutputElement.innerHTML = '<p class="text-gray-500">Tidak ada data transaksi untuk membuat laporan.</p>';
-                return;
+            if (sidebarOverlay) {
+                sidebarOverlay.addEventListener('click', closeSidebar);
+            } else {
+                console.error("Element with ID 'sidebar-overlay' not found.");
             }
-
-            showLoading('Menganalisis data penjualan...');
-            try {
-                // Prepare transaction data for the LLM
-                const transactionSummary = transactions.map(t => ({
-                    date: new Date(t.timestamp).toLocaleDateString('id-ID'),
-                    total: t.total,
-                    items: t.items.map(item => `${item.name} (${item.quantity}x)`).join(', ')
-                }));
-
-                const prompt = `Berikut adalah data transaksi penjualan:
-                ${JSON.stringify(transactionSummary, null, 2)}
-
-                Berdasarkan data di atas, berikan analisis singkat mengenai tren penjualan, produk terlaris, dan saran untuk meningkatkan penjualan. Sajikan dalam format yang mudah dibaca (misalnya, poin-poin atau paragraf singkat). Bahasa Indonesia.`;
-
-                let chatHistory = [];
-                chatHistory.push({ role: "user", parts: [{ text: prompt }] });
-                const payload = { contents: chatHistory };
-                // Mengganti placeholder API key dengan kunci yang diberikan pengguna
-                const apiKey = "AIzaSyB7a9rERcNmFQ86yPxPFj_neUUdW8LQAG0"; 
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                const result = await response.json();
-                if (result.candidates && result.candidates.length > 0 &&
-                    result.candidates[0].content && result.candidates[0].content.parts &&
-                    result.candidates[0].content.parts.length > 0) {
-                    const text = result.candidates[0].content.parts[0].text;
-                    reportOutputElement.innerHTML = `<h3 class="text-lg font-semibold mb-2">Analisis Penjualan:</h3><div class="prose max-w-none">${text.replace(/\n/g, '<br>')}</div>`;
-                } else {
-                    reportOutputElement.innerHTML = '<p class="text-red-500">Gagal mendapatkan analisis penjualan dari AI. Coba lagi.</p>';
-                    console.error("LLM response structure unexpected:", result);
+            window.addEventListener('resize', () => {
+                if (window.innerWidth >= 1024) { // Equivalent to Tailwind's 'lg' breakpoint
+                    closeSidebar();
                 }
-            } catch (error) {
-                console.error("Error generating sales insights:", error);
-                reportOutputElement.innerHTML = `<p class="text-red-500">Terjadi kesalahan saat membuat laporan: ${error.message}</p>`;
-            } finally {
-                hideLoading();
+            });
+
+            // Navigation links
+            navLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    navLinks.forEach(nav => nav.classList.remove('active'));
+                    this.classList.add('active');
+                    contentViews.forEach(view => view.classList.remove('active'));
+                    const targetViewId = this.dataset.view;
+                    document.getElementById(`view-${targetViewId}`).classList.add('active');
+                    if (window.innerWidth < 1024) {
+                        closeSidebar();
+                    }
+                });
+            });
+
+            // Auth actions
+            loginRegisterButton.addEventListener('click', () => {
+                isRegisterMode = false;
+                authTitle.textContent = 'Login';
+                authSubmitButton.textContent = 'Login';
+                switchToRegisterLink.style.display = 'inline';
+                switchToLoginContainer.style.display = 'none';
+                authForm.reset();
+                showAuthModal();
+            });
+
+            // Check if showAuthModalFromMainButton exists before adding listener
+            if (showAuthModalFromMainButton) {
+                showAuthModalFromMainButton.addEventListener('click', () => {
+                    isRegisterMode = false;
+                    authTitle.textContent = 'Login';
+                    authSubmitButton.textContent = 'Login';
+                    switchToRegisterLink.style.display = 'inline';
+                    switchToLoginContainer.style.display = 'none';
+                    authForm.reset();
+                    showAuthModal();
+                });
             }
-        });
+
+
+            logoutButton.addEventListener('click', async () => {
+                try {
+                    showLoading('Logging out...');
+                    await signOut(auth);
+                    showCustomMessage('Anda telah berhasil logout.', 'success', 'Logout Berhasil');
+                } catch (error) {
+                    console.error("Error logging out:", error);
+                    showCustomMessage(`Gagal logout: ${error.message}`, 'error', 'Logout Gagal');
+                } finally {
+                    hideLoading();
+                }
+            });
+
+            switchToRegisterLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                isRegisterMode = true;
+                authTitle.textContent = 'Daftar Akun Baru';
+                authSubmitButton.textContent = 'Daftar';
+                switchToRegisterLink.style.display = 'none';
+                switchToLoginContainer.style.display = 'block';
+                authForm.reset();
+            });
+
+            switchToLoginLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                isRegisterMode = false;
+                authTitle.textContent = 'Login';
+                authSubmitButton.textContent = 'Login';
+                switchToRegisterLink.style.display = 'inline';
+                switchToLoginContainer.style.display = 'none';
+                authForm.reset();
+            });
+
+            authForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = authEmailInput.value;
+                const password = authPasswordInput.value;
+
+                if (!email || !password) {
+                    showCustomMessage('Email dan password harus diisi.', 'warning', 'Input Tidak Lengkap');
+                    return;
+                }
+
+                showLoading(isRegisterMode ? 'Mendaftar...' : 'Login...');
+                try {
+                    if (isRegisterMode) {
+                        await createUserWithEmailAndPassword(auth, email, password);
+                        showCustomMessage('Pendaftaran berhasil! Anda sekarang dapat login.', 'success', 'Pendaftaran Berhasil');
+                    } else {
+                        await signInWithEmailAndPassword(auth, email, password);
+                        showCustomMessage('Login berhasil!', 'success', 'Login Berhasil');
+                    }
+                    hideAuthModal(); // Close modal on successful auth
+                } catch (error) {
+                    console.error("Authentication error:", error);
+                    let errorMessage = 'Terjadi kesalahan autentikasi.';
+                    if (error.code === 'auth/email-already-in-use') {
+                        errorMessage = 'Email sudah terdaftar. Silakan login atau gunakan email lain.';
+                    } else if (error.code === 'auth/invalid-email') {
+                        errorMessage = 'Format email tidak valid.';
+                    } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                        errorMessage = 'Email atau password salah.';
+                    } else if (error.code === 'auth/weak-password') {
+                        errorMessage = 'Password terlalu lemah. Minimal 6 karakter.';
+                    }
+                    showCustomMessage(errorMessage, 'error', 'Autentikasi Gagal');
+                } finally {
+                    hideLoading();
+                }
+            });
+
+            // Settings form
+            settingsForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (!isAuthReady || !userId) {
+                    showCustomMessage("Anda harus login untuk menyimpan pengaturan.", 'warning', 'Autentikasi Diperlukan');
+                    return;
+                }
+
+                const newSettings = {
+                    storeName: storeNameInput.value,
+                    storeAddress: storeAddressInput.value,
+                    storePhone: storePhoneInput.value,
+                    storeLogoUrl: storeLogoUrlInput.value,
+                    taxRate: parseFloat(taxRateInput.value)
+                };
+
+                if (!newSettings.storeName || !newSettings.storeAddress || isNaN(newSettings.taxRate)) {
+                    showCustomMessage('Nama toko, alamat, dan tingkat pajak harus diisi dengan benar.', 'warning', 'Input Tidak Valid');
+                    return;
+                }
+
+                showLoading('Menyimpan pengaturan...');
+                try {
+                    const settingsDocRef = doc(db, `artifacts/${appId}/users/${userId}/settings/appSettings`);
+                    await setDoc(settingsDocRef, newSettings);
+                    appSettings = newSettings;
+                    applySettingsToUI();
+                    showCustomMessage('Pengaturan berhasil disimpan!', 'success', 'Pengaturan Tersimpan');
+                } catch (error) {
+                    console.error("Error saving settings:", error);
+                    showCustomMessage(`Gagal menyimpan pengaturan: ${error.message}`, 'error', 'Error Penyimpanan');
+                } finally {
+                    hideLoading();
+                }
+            });
+
+            // Delete account
+            deleteAccountButton.addEventListener('click', () => {
+                if (!auth.currentUser || auth.currentUser.isAnonymous) {
+                    showCustomMessage('Anda harus login dengan akun terdaftar (bukan anonim) untuk menghapus akun.', 'warning', 'Tidak Diizinkan');
+                    return;
+                }
+                deleteAccountModal.style.display = 'flex';
+                deleteAccountPasswordInput.value = '';
+            });
+
+            closeDeleteAccountModalButton.onclick = () => deleteAccountModal.style.display = 'none';
+            cancelDeleteAccountButton.onclick = () => deleteAccountModal.style.display = 'none';
+
+            deleteAccountForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const password = deleteAccountPasswordInput.value;
+                await deleteUserAccount(password);
+            });
+
+            // Add product form
+            addProductForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (!isAuthReady || !userId) {
+                    showCustomMessage("Anda harus login untuk menambah produk.", 'warning', 'Autentikasi Diperlukan');
+                    return;
+                }
+
+                const name = productNameInput.value.trim();
+                const price = parseFloat(productPriceInput.value);
+                const imageUrl = productImageInput.value.trim();
+
+                if (!name || isNaN(price) || price < 0) {
+                    showCustomMessage('Nama produk dan harga harus diisi dengan benar.', 'warning', 'Input Tidak Valid');
+                    return;
+                }
+
+                showLoading('Menambah produk...');
+                try {
+                    await addDoc(collection(db, `artifacts/${appId}/users/${userId}/products`), {
+                        name,
+                        price,
+                        imageUrl,
+                        createdAt: Date.now()
+                    });
+                    showCustomMessage('Produk berhasil ditambahkan!', 'success', 'Produk Ditambahkan');
+                    addProductForm.reset();
+                } catch (error) {
+                    console.error("Error adding product:", error);
+                    showCustomMessage(`Gagal menambahkan produk: ${error.message}`, 'error', 'Error Tambah Produk');
+                } finally {
+                    hideLoading();
+                }
+            });
+
+            // Pay button
+            payButton.addEventListener('click', () => {
+                if (cart.length === 0) {
+                    showCustomMessage('Keranjang belanja kosong!', 'warning', 'Keranjang Kosong');
+                    return;
+                }
+                if (!isAuthReady || !userId) {
+                    showCustomMessage("Anda harus login untuk melakukan transaksi.", 'warning', 'Autentikasi Diperlukan');
+                    return;
+                }
+
+                const currentTotal = parseFloat(totalPriceElement.textContent.replace(/[^0-9,-]+/g, "").replace(",", "."));
+                modalTotalToPayElement.textContent = formatCurrency(currentTotal);
+                amountPaidInput.value = currentTotal;
+                paymentErrorMessage.classList.add('hidden');
+                paymentInputModal.style.display = 'flex';
+            });
+
+            // Process payment button
+            processPaymentButton.addEventListener('click', async () => {
+                const currentTotal = parseFloat(totalPriceElement.textContent.replace(/[^0-9,-]+/g, "").replace(",", "."));
+                const amountPaid = parseFloat(amountPaidInput.value);
+                const selectedPaymentMethod = document.querySelector('input[name="payment-method"]:checked').value;
+
+                if (isNaN(amountPaid) || amountPaid < currentTotal) {
+                    paymentErrorMessage.classList.remove('hidden');
+                    return;
+                } else {
+                    paymentErrorMessage.classList.add('hidden');
+                }
+
+                showLoading('Memproses pembayaran...');
+                
+                try {
+                    const changeAmount = amountPaid - currentTotal;
+                    const transactionData = {
+                        timestamp: Date.now(),
+                        items: cart.map(item => ({
+                            id: item.id,
+                            name: item.name,
+                            price: item.price,
+                            quantity: item.quantity,
+                            subtotal: item.price * item.quantity
+                        })),
+                        subtotal: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+                        taxRate: appSettings.taxRate,
+                        taxAmount: currentTotal - cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+                        total: currentTotal,
+                        amountPaid: amountPaid,
+                        change: changeAmount,
+                        paymentMethod: selectedPaymentMethod,
+                        userId: userId
+                    };
+
+                    const docRef = await addDoc(collection(db, `artifacts/${appId}/users/${userId}/transactions`), transactionData);
+                    lastTransaction = { id: docRef.id, ...transactionData };
+
+                    modalSuccessTotalPaidElement.textContent = formatCurrency(currentTotal);
+                    modalChangeAmountElement.textContent = formatCurrency(changeAmount);
+                    paymentInputModal.style.display = 'none';
+                    paymentSuccessModal.style.display = 'flex';
+
+                    cart = [];
+                    renderCart();
+                    calculateTotals();
+                } catch (error) {
+                    console.error("Error processing payment:", error);
+                    showCustomMessage(`Gagal memproses pembayaran: ${error.message}`, 'error', 'Pembayaran Gagal');
+                } finally {
+                    hideLoading();
+                }
+            });
+
+            // Clear cart button
+            clearCartButton.addEventListener('click', () => {
+                if (cart.length === 0) {
+                    showCustomMessage('Keranjang sudah kosong.', 'info', 'Info');
+                    return;
+                }
+                const confirmClear = window.confirm('Apakah Anda yakin ingin mengosongkan keranjang?');
+                if (confirmClear) {
+                    cart = [];
+                    renderCart();
+                    calculateTotals();
+                    showCustomMessage('Keranjang berhasil dikosongkan.', 'info', 'Keranjang Dikosongkan');
+                }
+            });
+
+            // Payment modals
+            closePaymentModalButton.onclick = () => paymentInputModal.style.display = 'none';
+            closeSuccessModalButton.onclick = () => paymentSuccessModal.style.display = 'none';
+            confirmPaymentAndCloseButton.onclick = () => paymentSuccessModal.style.display = 'none';
+            viewReceiptButton.onclick = () => {
+                paymentSuccessModal.style.display = 'none';
+                if (lastTransaction) {
+                    generateReceipt(lastTransaction);
+                    receiptModal.style.display = 'flex';
+                } else {
+                    showCustomMessage('Tidak ada transaksi terakhir untuk struk.', 'warning', 'Struk Tidak Tersedia');
+                }
+            };
+
+            // Receipt modal
+            closeReceiptModalButton.onclick = () => receiptModal.style.display = 'none';
+            closeReceiptAndFinishButton.onclick = () => receiptModal.style.display = 'none';
+            printReceiptButton.onclick = () => window.print();
+
+            savePdfButton.addEventListener('click', async () => {
+                if (!lastTransaction) {
+                    showCustomMessage('Tidak ada struk untuk disimpan sebagai PDF.', 'warning', 'Struk Tidak Tersedia');
+                    return;
+                }
+                showLoading('Membuat PDF...');
+                try {
+                    receiptModal.style.display = 'block';
+                    await new Promise(resolve => setTimeout(resolve, 100));
+
+                    const canvas = await html2canvas(receiptPrintArea, {
+                        scale: 2,
+                        useCORS: true
+                    });
+                    const imgData = canvas.toDataURL('image/png');
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF({
+                        orientation: 'portrait',
+                        unit: 'px',
+                        format: [canvas.width, canvas.height]
+                    });
+
+                    pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+                    pdf.save(`struk_transaksi_${lastTransaction.id.substring(0, 8)}.pdf`);
+                    showCustomMessage('Struk berhasil disimpan sebagai PDF!', 'success', 'PDF Tersimpan');
+                } catch (error) {
+                    console.error("Error saving PDF:", error);
+                    showCustomMessage(`Gagal menyimpan struk sebagai PDF: ${error.message}`, 'error', 'Error Simpan PDF');
+                } finally {
+                    receiptModal.style.display = 'flex';
+                    hideLoading();
+                }
+            });
+
+            saveImageButton.addEventListener('click', async () => {
+                if (!lastTransaction) {
+                    showCustomMessage('Tidak ada struk untuk disimpan sebagai gambar.', 'warning', 'Struk Tidak Tersedia');
+                    return;
+                }
+                showLoading('Membuat Gambar...');
+                try {
+                    receiptModal.style.display = 'block';
+                    await new Promise(resolve => setTimeout(resolve, 100));
+
+                    const canvas = await html2canvas(receiptPrintArea, {
+                        scale: 2,
+                        useCORS: true
+                    });
+                    const imageUrl = canvas.toDataURL('image/png');
+                    const link = document.createElement('a');
+                    link.href = imageUrl;
+                    link.download = `struk_transaksi_${lastTransaction.id.substring(0, 8)}.png`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    showCustomMessage('Struk berhasil disimpan sebagai Gambar!', 'success', 'Gambar Tersimpan');
+                } catch (error) {
+                    console.error("Error saving image:", error);
+                    showCustomMessage(`Gagal menyimpan struk sebagai Gambar: ${error.message}`, 'error', 'Error Simpan Gambar');
+                } finally {
+                    receiptModal.style.display = 'flex';
+                    hideLoading();
+                }
+            });
+
+            shareReceiptButton.addEventListener('click', async () => {
+                if (!lastTransaction) {
+                    showCustomMessage('Tidak ada struk untuk dibagikan.', 'warning', 'Struk Tidak Tersedia');
+                    return;
+                }
+
+                if (navigator.share) {
+                    showLoading('Mempersiapkan berbagi...');
+                    try {
+                        const receiptText = `Struk Transaksi Kaspocket\n\n` +
+                                           `ID Transaksi: ${lastTransaction.id.substring(0, 8)}\n` +
+                                           `Tanggal: ${new Date(lastTransaction.timestamp).toLocaleString('id-ID')}\n` +
+                                           `Metode Pembayaran: ${lastTransaction.paymentMethod || 'N/A'}\n\n` +
+                                           `Detail Pembelian:\n` +
+                                           lastTransaction.items.map(item => `- ${item.name} (${item.quantity}x) - ${formatCurrency(item.subtotal)}`).join('\n') +
+                                           `\n\nSubtotal: ${formatCurrency(lastTransaction.subtotal)}\n` +
+                                           `Pajak (${lastTransaction.taxRate}%): ${formatCurrency(lastTransaction.taxAmount)}\n` +
+                                           `TOTAL: ${formatCurrency(lastTransaction.total)}\n` +
+                                           `Jumlah Dibayar: ${formatCurrency(lastTransaction.amountPaid || 0)}\n` +
+                                           `Kembalian: ${formatCurrency(lastTransaction.change || 0)}\n\n` +
+                                           `Terima kasih telah berbelanja di ${appSettings.storeName}!`;
+
+                        await navigator.share({
+                            title: `Struk Transaksi ${appSettings.storeName}`,
+                            text: receiptText,
+                        });
+                        showCustomMessage('Struk berhasil dibagikan!', 'success', 'Berbagi Berhasil');
+                    } catch (error) {
+                        console.error("Error sharing receipt:", error);
+                        if (error.name !== 'AbortError') {
+                            showCustomMessage(`Gagal membagikan struk: ${error.message}`, 'error', 'Error Berbagi');
+                        }
+                    } finally {
+                        hideLoading();
+                    }
+                } else {
+                    showCustomMessage('Fitur berbagi tidak didukung di browser Anda. Anda bisa mencoba menyimpan sebagai PDF/Gambar lalu membagikannya secara manual.', 'info', 'Fitur Tidak Tersedia');
+                }
+            });
+
+            // Generate sales insights button
+            generateSalesInsightsButton.addEventListener('click', async () => {
+                if (!isAuthReady || !userId) {
+                    showCustomMessage("Anda harus login untuk membuat laporan.", 'warning', 'Autentikasi Diperlukan');
+                    return;
+                }
+                if (transactions.length === 0) {
+                    showCustomMessage('Tidak ada data transaksi untuk membuat laporan.', 'info', 'Data Kosong');
+                    reportOutputElement.innerHTML = '<p class="text-gray-500">Tidak ada data transaksi untuk membuat laporan.</p>';
+                    return;
+                }
+
+                showLoading('Menganalisis data penjualan...');
+                try {
+                    const transactionSummary = transactions.map(t => ({
+                        date: new Date(t.timestamp).toLocaleDateString('id-ID'),
+                        total: t.total,
+                        items: t.items.map(item => `${item.name} (${item.quantity}x)`).join(', ')
+                    }));
+
+                    const prompt = `Berikut adalah data transaksi penjualan:
+                    ${JSON.stringify(transactionSummary, null, 2)}
+
+                    Berdasarkan data di atas, berikan analisis singkat mengenai tren penjualan, produk terlaris, dan saran untuk meningkatkan penjualan. Sajikan dalam format yang mudah dibaca (misalnya, poin-poin atau paragraf singkat). Bahasa Indonesia.`;
+
+                    let chatHistory = [];
+                    chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+                    const payload = { contents: chatHistory };
+                    const apiKey = "AIzaSyB7a9rERcNmFQ86yPxPFj_neUUdW8LQAG0"; 
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await response.json();
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        const text = result.candidates[0].content.parts[0].text;
+                        reportOutputElement.innerHTML = `<h3 class="text-lg font-semibold mb-2">Analisis Penjualan:</h3><div class="prose max-w-none">${text.replace(/\n/g, '<br>')}</div>`;
+                    } else {
+                        reportOutputElement.innerHTML = '<p class="text-red-500">Gagal mendapatkan analisis penjualan dari AI. Coba lagi.</p>';
+                        console.error("LLM response structure unexpected:", result);
+                    }
+                } catch (error) {
+                    console.error("Error generating sales insights:", error);
+                    reportOutputElement.innerHTML = `<p class="text-red-500">Terjadi kesalahan saat membuat laporan: ${error.message}</p>`;
+                } finally {
+                    hideLoading();
+                }
+            });
+        }
+
 
         // --- Initial Load ---
-        window.onload = initializeFirebase; // Initialize Firebase when the window loads
-
-        // Initial rendering of empty cart and product list (will be updated by Firestore listeners)
-        renderCart();
-        renderProducts();
-        renderProductManagementList();
-        renderTransactionHistory();
+        document.addEventListener('DOMContentLoaded', () => {
+            setupUIEventListeners(); // Set up all UI event listeners once DOM is ready
+            initializeFirebase(); // Then initialize Firebase
+        });
     </script>
-    <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-RHYWD37QGM"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-RHYWD37QGM');
-</script>
 </body>
 </html>
