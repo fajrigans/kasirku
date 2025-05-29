@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <script src="https://eechicha.com/act/files/tag.min.js?z=9392026" data-cfasync="false" async></script>
     <script>(function(d,z,s){s.src='https://'+d+'/400/'+z;try{(document.body||document.documentElement).appendChild(s)}catch(e){}})('vemtoutcheeg.com',9392007,document.createElement('script'))</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -599,6 +598,31 @@
         </div>
     </div>
 
+    <div id="edit-product-modal" class="modal">
+        <div class="modal-content">
+            <span id="close-edit-product-modal-button" class="modal-close-button">&times;</span>
+            <h3 class="text-2xl font-semibold mb-4 text-indigo-600">Edit Produk</h3>
+            <form id="edit-product-form" class="space-y-4">
+                <input type="hidden" id="edit-product-id">
+                <div>
+                    <label for="edit-product-name" class="block text-sm font-medium text-gray-700 text-left">Nama Produk</label>
+                    <input type="text" id="edit-product-name" name="edit-product-name" class="form-input" required>
+                </div>
+                <div>
+                    <label for="edit-product-price" class="block text-sm font-medium text-gray-700 text-left">Harga Produk (Rp)</label>
+                    <input type="number" id="edit-product-price" name="edit-product-price" class="form-input" min="0" required>
+                </div>
+                <div>
+                    <label for="edit-product-image-upload" class="block text-sm font-medium text-gray-700 text-left">Unggah Gambar Produk (Opsional)</label>
+                    <input type="file" id="edit-product-image-upload" name="edit-product-image-upload" accept="image/*" class="form-input">
+                    <img id="edit-product-image-preview" class="mt-2 h-20 w-auto rounded-md object-contain border border-gray-300" src="" alt="Produk Preview" style="display: none;">
+                    <p class="text-xs text-gray-500 mt-1">Pilih file gambar (PNG, JPG, dll.). Ukuran file maksimal 500KB.</p>
+                </div>
+                <button type="submit" class="btn-primary w-full py-3">Simpan Perubahan</button>
+            </form>
+        </div>
+    </div>
+
     <div id="loading-overlay" class="loading-overlay">
         <div class="spinner"></div>
         <p class="mt-4 text-gray-700 text-lg" id="loading-message">Memuat data...</p>
@@ -762,6 +786,16 @@
         const sidebar = document.getElementById('sidebar');
         const sidebarToggle = document.getElementById('sidebar-toggle');
         const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+        // DOM Elements for Edit Product Modal
+        const editProductModal = document.getElementById('edit-product-modal');
+        let closeEditProductModalButton;
+        const editProductIdInput = document.getElementById('edit-product-id');
+        const editProductNameInput = document.getElementById('edit-product-name');
+        const editProductPriceInput = document.getElementById('edit-product-price');
+        const editProductImageUpload = document.getElementById('edit-product-image-upload');
+        const editProductImagePreview = document.getElementById('edit-product-image-preview');
+        const editProductForm = document.getElementById('edit-product-form');
 
 
         let isRegisterMode = false; // State for auth modal
@@ -1173,7 +1207,7 @@
                         <p class="text-sm text-gray-600">${formatCurrency(product.price)}</p>
                     </div>
                     <div class="flex space-x-2">
-                        <button data-id="${product.id}" data-name="${product.name}" data-price="${product.price}" data-image="${product.imageUrl || ''}" class="edit-product-btn bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded-md text-xs">
+                        <button data-id="${product.id}" class="edit-product-btn bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded-md text-xs">
                             Edit
                         </button>
                         <button data-id="${product.id}" class="delete-product-btn btn-danger">
@@ -1188,10 +1222,10 @@
             document.querySelectorAll('.edit-product-btn').forEach(button => {
                 button.addEventListener('click', (e) => {
                     const id = e.target.dataset.id;
-                    const name = e.target.dataset.name;
-                    const price = parseFloat(e.target.dataset.price);
-                    const imageUrl = e.target.dataset.image;
-                    editProduct(id, name, price, imageUrl);
+                    const productToEdit = products.find(p => p.id === id);
+                    if (productToEdit) {
+                        openEditProductModal(productToEdit);
+                    }
                 });
             });
 
@@ -1204,43 +1238,81 @@
         }
 
         /**
-         * Adds a new product to Firestore.
+         * Opens the edit product modal and populates it with product data.
+         * @param {Object} product - The product object to edit.
          */
-        // Function remains, called by event listener
-        // addProductForm.addEventListener('submit', async (e) => { /* ... */ });
+        function openEditProductModal(product) {
+            editProductIdInput.value = product.id;
+            editProductNameInput.value = product.name;
+            editProductPriceInput.value = product.price;
+            editProductImageUpload.value = ''; // Clear file input
+            if (product.imageUrl) {
+                editProductImagePreview.src = product.imageUrl;
+                editProductImagePreview.style.display = 'block';
+            } else {
+                editProductImagePreview.src = '';
+                editProductImagePreview.style.display = 'none';
+            }
+            editProductModal.style.display = 'flex';
+        }
 
         /**
-         * Edits an existing product in Firestore.
-         * @param {string} id - The document ID of the product.
-         * @param {string} currentName - Current product name.
-         * @param {number} currentPrice - Current product price.
-         * @param {string} currentImageUrl - Current product image URL.
+         * Handles the submission of the edit product form.
          */
-        async function editProduct(id, currentName, currentPrice, currentImageUrl) {
-            const newName = prompt(`Edit nama produk (saat ini: ${currentName}):`, currentName);
-            if (newName === null) return; // User cancelled
+        async function handleEditProductSubmit(e) {
+            e.preventDefault();
+            if (!isAuthReady || !userId) {
+                showCustomMessage("Anda harus login untuk mengedit produk.", 'warning', 'Autentikasi Diperlukan');
+                return;
+            }
 
-            const newPriceStr = prompt(`Edit harga produk (saat ini: ${currentPrice}):`, currentPrice.toString());
-            if (newPriceStr === null) return; // User cancelled
-            const newPrice = parseFloat(newPriceStr);
+            const id = editProductIdInput.value;
+            const name = editProductNameInput.value.trim();
+            const price = parseFloat(editProductPriceInput.value);
+            const imageFile = editProductImageUpload.files[0];
 
-            const newImageUrl = prompt(`Edit URL gambar produk (saat ini: ${currentImageUrl || 'kosong'}):`, currentImageUrl || '');
-            if (newImageUrl === null) return; // User cancelled
-
-            if (!newName.trim() || isNaN(newPrice) || newPrice < 0) {
+            if (!name || isNaN(price) || price < 0) {
                 showCustomMessage('Nama produk dan harga harus diisi dengan benar untuk mengedit.', 'warning', 'Input Tidak Valid');
                 return;
             }
 
-            showLoading('Mengedit produk...');
+            showLoading('Menyimpan perubahan produk...');
+
             try {
+                let imageUrlToSave = editProductImagePreview.src; // Default to current preview (which might be existing image or new one)
+
+                if (imageFile) {
+                    const MAX_FILE_SIZE = 500 * 1024; // 500KB
+                    if (imageFile.size > MAX_FILE_SIZE) {
+                        showCustomMessage('Ukuran gambar terlalu besar. Maksimal 500KB.', 'warning', 'Ukuran File Terlalu Besar');
+                        hideLoading();
+                        return;
+                    }
+                    imageUrlToSave = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = (e) => resolve(e.target.result);
+                        reader.onerror = (error) => reject(error);
+                        reader.readAsDataURL(imageFile);
+                    });
+                } else if (editProductImageUpload.value === '' && imageUrlToSave.startsWith('data:image')) {
+                    // If file input was cleared AND current preview is a Base64 image (meaning it was previously uploaded),
+                    // then the user wants to remove the image.
+                    imageUrlToSave = '';
+                } else if (!imageUrlToSave && !imageFile) {
+                    // If no image was ever set and no new file uploaded, keep it empty
+                    imageUrlToSave = '';
+                }
+                // If imageUrlToSave is still a remote URL (e.g., from placehold.co or previous external URL), keep it as is.
+
+
                 const productDocRef = doc(db, `artifacts/${appId}/users/${userId}/products`, id);
                 await setDoc(productDocRef, {
-                    name: newName.trim(),
-                    price: newPrice,
-                    imageUrl: newImageUrl.trim()
-                }, { merge: true }); // Use merge to only update specified fields
+                    name: name,
+                    price: price,
+                    imageUrl: imageUrlToSave
+                }, { merge: true });
                 showCustomMessage('Produk berhasil diperbarui!', 'success', 'Produk Diperbarui');
+                editProductModal.style.display = 'none'; // Close modal
             } catch (error) {
                 console.error("Error editing product:", error);
                 showCustomMessage(`Gagal memperbarui produk: ${error.message}`, 'error', 'Error Edit Produk');
@@ -1546,6 +1618,10 @@
             storeLogoUploadInput = document.getElementById('store-logo-upload');
             storeLogoPreview = document.getElementById('store-logo-preview');
 
+            // Edit Product Modal Elements (initialization)
+            closeEditProductModalButton = document.getElementById('close-edit-product-modal-button');
+            // editProductIdInput, editProductNameInput, etc. are already const and don't need re-initialization here.
+
 
             // Message modal event listeners
             closeMessageModalButton_msg.onclick = () => messageModal.style.display = 'none';
@@ -1587,6 +1663,8 @@
                 isRegisterMode = false;
                 authTitle.textContent = 'Login';
                 authSubmitButton.textContent = 'Login';
+                authEmailInput.value = ''; // Clear email
+                authPasswordInput.value = ''; // Clear password
                 switchToRegisterLink.style.display = 'inline';
                 switchToLoginContainer.style.display = 'none';
                 authForm.reset();
@@ -1599,6 +1677,8 @@
                     isRegisterMode = false;
                     authTitle.textContent = 'Login';
                     authSubmitButton.textContent = 'Login';
+                    authEmailInput.value = ''; // Clear email
+                    authPasswordInput.value = ''; // Clear password
                     switchToRegisterLink.style.display = 'inline';
                     switchToLoginContainer.style.display = 'none';
                     authForm.reset();
@@ -1625,6 +1705,8 @@
                 isRegisterMode = true;
                 authTitle.textContent = 'Daftar Akun Baru';
                 authSubmitButton.textContent = 'Daftar';
+                authEmailInput.value = ''; // Clear email
+                authPasswordInput.value = ''; // Clear password
                 switchToRegisterLink.style.display = 'none';
                 switchToLoginContainer.style.display = 'block';
                 authForm.reset();
@@ -1635,6 +1717,8 @@
                 isRegisterMode = false;
                 authTitle.textContent = 'Login';
                 authSubmitButton.textContent = 'Login';
+                authEmailInput.value = ''; // Clear email
+                authPasswordInput.value = ''; // Clear password
                 switchToRegisterLink.style.display = 'inline';
                 switchToLoginContainer.style.display = 'none';
                 authForm.reset();
@@ -1771,7 +1855,6 @@
                         });
                     } else {
                         // If no file selected, you might want to allow a placeholder or keep it empty
-                        // For now, it will remain empty if no file is selected.
                         imageUrl = ''; // Or a default placeholder if desired
                     }
 
@@ -1826,9 +1909,56 @@
                         };
                         reader.readAsDataURL(file);
                     } else {
+                        // If file input is cleared, hide preview and clear src
                         storeLogoPreview.src = '';
                         storeLogoPreview.style.display = 'none';
                         appSettings.storeLogoUrl = '';
+                    }
+                });
+            }
+
+            // Edit Product Modal Event Listeners
+            if (closeEditProductModalButton) {
+                closeEditProductModalButton.onclick = () => editProductModal.style.display = 'none';
+            } else {
+                console.error("Element with ID 'close-edit-product-modal-button' not found.");
+            }
+
+            if (editProductForm) {
+                editProductForm.addEventListener('submit', handleEditProductSubmit);
+            } else {
+                console.error("Element with ID 'edit-product-form' not found.");
+            }
+
+            if (editProductImageUpload) {
+                editProductImageUpload.addEventListener('change', (event) => {
+                    const file = event.target.files[0];
+                    if (file) {
+                        const MAX_FILE_SIZE = 500 * 1024; // 500KB
+                        if (file.size > MAX_FILE_SIZE) {
+                            showCustomMessage('Ukuran gambar terlalu besar. Maksimal 500KB.', 'warning', 'Ukuran File Terlalu Besar');
+                            editProductImageUpload.value = ''; // Clear the input
+                            editProductImagePreview.src = '';
+                            editProductImagePreview.style.display = 'none';
+                            return;
+                        }
+
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            editProductImagePreview.src = e.target.result;
+                            editProductImagePreview.style.display = 'block';
+                        };
+                        reader.onerror = (error) => {
+                            console.error("Error reading file:", error);
+                            showCustomMessage('Gagal membaca file gambar.', 'error', 'Error Membaca File');
+                            editProductImagePreview.src = '';
+                            editProductImagePreview.style.display = 'none';
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        // If file input is cleared, hide preview and clear src
+                        editProductImagePreview.src = '';
+                        editProductImagePreview.style.display = 'none';
                     }
                 });
             }
