@@ -339,13 +339,13 @@
                         <h2 class="text-3xl font-bold text-indigo-600">Laporan Penjualan</h2>
                     </header>
                     <div class="bg-white p-6 rounded-lg shadow-xl">
-                        <p class="text-gray-600">Fitur laporan (harian, mingguan, bulanan) sedang dalam pengembangan.</p>
-                        <div class="mt-4">
-                            <button class="btn-secondary mr-2">Laporan Harian</button>
-                            <button class="btn-secondary mr-2">Laporan Mingguan</button>
-                            <button class="btn-secondary">Laporan Bulanan</button>
+                        <p class="text-gray-600">Pilih periode laporan di bawah ini:</p>
+                        <div class="mt-4 flex flex-wrap gap-2">
+                            <button id="daily-report-btn" class="btn-secondary">Laporan Harian</button>
+                            <button id="weekly-report-btn" class="btn-secondary">Laporan Mingguan</button>
+                            <button id="monthly-report-btn" class="btn-secondary">Laporan Bulanan</button>
                         </div>
-                        <button id="generate-sales-insights-button" class="btn-primary mt-6">Generate Sales Insights ✨</button>
+                        <button id="generate-sales-insights-button" class="btn-primary mt-6" disabled>Generate Sales Insights ✨</button>
                         <div id="report-output" class="mt-6 p-4 border rounded-md bg-gray-50 min-h-[200px]">
                             <p class="text-gray-500">Hasil laporan akan ditampilkan di sini.</p>
                         </div>
@@ -746,6 +746,9 @@
         const emptyHistoryMessage = document.getElementById('empty-history-message');
         
         // DOM Elements for Laporan (Reports)
+        const dailyReportBtn = document.getElementById('daily-report-btn');
+        const weeklyReportBtn = document.getElementById('weekly-report-btn');
+        const monthlyReportBtn = document.getElementById('monthly-report-btn');
         const generateSalesInsightsButton = document.getElementById('generate-sales-insights-button');
         const reportOutputElement = document.getElementById('report-output');
 
@@ -919,6 +922,7 @@
                         renderProductManagementList(); // Initial render for unauthenticated state
                         renderTransactionHistory(); // Initial render for unauthenticated state
                         reportOutputElement.innerHTML = '<p class="text-gray-500">Hasil laporan akan ditampilkan di sini.</p>';
+                        generateSalesInsightsButton.disabled = true; // Disable until data is available
                     }
                     hideLoading();
                 }, (error) => {
@@ -1014,6 +1018,9 @@
                 // Sort transactions by timestamp in descending order
                 transactions.sort((a, b) => b.timestamp - a.timestamp);
                 renderTransactionHistory();
+                // When transactions are updated, clear any previous report output and disable insight button
+                reportOutputElement.innerHTML = '<p class="text-gray-500">Hasil laporan akan ditampilkan di sini.</p>';
+                generateSalesInsightsButton.disabled = true;
             }, (error) => {
                 console.error("Error fetching transactions:", error);
                 showCustomMessage("Gagal memuat riwayat transaksi. Pastikan aturan keamanan Firestore Anda mengizinkan akses.", 'error', 'Error Riwayat Transaksi');
@@ -1026,11 +1033,11 @@
             onSnapshot(settingsDocRef, (docSnap) => {
                 if (docSnap.exists()) {
                     appSettings = { ...appSettings, ...docSnap.data() };
-                    applySettingsToUI();
                 } else {
                     // If settings don't exist, save default settings
                     saveSettings();
                 }
+                applySettingsToUI();
             }, (error) => {
                 console.error("Error fetching settings:", error);
                 showCustomMessage("Gagal memuat pengaturan aplikasi. Pastikan aturan keamanan Firestore Anda mengizinkan akses.", 'error', 'Error Pengaturan');
@@ -1548,6 +1555,137 @@
                     }
                 });
             });
+        }
+
+        /**
+         * Generates and displays a sales report for a specified period.
+         * @param {'daily'|'weekly'|'monthly'} period - The period for the report.
+         */
+        function generateReport(period) {
+            let startDate;
+            let endDate = Date.now(); // Current time
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Start of today in local time
+
+            if (period === 'daily') {
+                startDate = today.getTime();
+            } else if (period === 'weekly') {
+                startDate = today.getTime() - (7 * 24 * 60 * 60 * 1000); // 7 days ago from start of today
+            } else if (period === 'monthly') {
+                startDate = new Date(today.getFullYear(), today.getMonth(), 1).getTime(); // Start of current month
+            } else {
+                reportOutputElement.innerHTML = '<p class="text-red-500">Periode laporan tidak valid.</p>';
+                generateSalesInsightsButton.disabled = true;
+                return;
+            }
+
+            const filteredTransactions = transactions.filter(t => {
+                return t.timestamp >= startDate && t.timestamp <= endDate;
+            });
+
+            if (filteredTransactions.length === 0) {
+                reportOutputElement.innerHTML = `<p class="text-gray-500">Tidak ada data transaksi untuk periode ${period.charAt(0).toUpperCase() + period.slice(1)}.</p>`;
+                generateSalesInsightsButton.disabled = true;
+                return;
+            }
+
+            let totalSales = 0;
+            const productSales = {}; // { productId: { name: 'Product Name', quantity: X, totalRevenue: Y } }
+
+            filteredTransactions.forEach(t => {
+                totalSales += t.total;
+                t.items.forEach(item => {
+                    if (!productSales[item.id]) {
+                        productSales[item.id] = { name: item.name, quantity: 0, totalRevenue: 0 };
+                    }
+                    productSales[item.id].quantity += item.quantity;
+                    productSales[item.id].totalRevenue += item.subtotal;
+                });
+            });
+
+            const sortedProducts = Object.values(productSales).sort((a, b) => b.quantity - a.quantity);
+            const topProducts = sortedProducts.slice(0, 5); // Top 5 products by quantity sold
+
+            let reportHtml = `
+                <h3 class="text-xl font-semibold mb-3 text-gray-700">Laporan ${period.charAt(0).toUpperCase() + period.slice(1)}</h3>
+                <p class="mb-2"><strong>Total Penjualan:</strong> ${formatCurrency(totalSales)}</p>
+                <p class="mb-4"><strong>Jumlah Transaksi:</strong> ${filteredTransactions.length}</p>
+            `;
+
+            if (topProducts.length > 0) {
+                reportHtml += `<h4 class="font-semibold text-lg mb-2">Produk Terlaris:</h4>`;
+                reportHtml += `<ul class="list-disc list-inside mb-4">`;
+                topProducts.forEach(p => {
+                    reportHtml += `<li>${p.name}: ${p.quantity} unit (${formatCurrency(p.totalRevenue)})</li>`;
+                });
+                reportHtml += `</ul>`;
+            } else {
+                reportHtml += `<p class="text-gray-500">Tidak ada produk terlaris untuk periode ini.</p>`;
+            }
+
+            reportOutputElement.innerHTML = reportHtml;
+            // Store filtered transactions for the LLM to use
+            reportOutputElement.dataset.currentFilteredTransactions = JSON.stringify(filteredTransactions);
+            generateSalesInsightsButton.disabled = false; // Enable the button once a report is generated
+        }
+
+        /**
+         * Generates sales insights using an LLM based on provided transactions.
+         * @param {Array<Object>} transactionsForInsight - The array of transactions to analyze.
+         */
+        async function generateSalesInsights(transactionsForInsight) {
+            if (!isAuthReady || !userId) {
+                showCustomMessage("Anda harus login untuk membuat laporan.", 'warning', 'Autentikasi Diperlukan');
+                return;
+            }
+            if (transactionsForInsight.length === 0) {
+                showCustomMessage('Tidak ada data transaksi untuk membuat laporan.', 'info', 'Data Kosong');
+                reportOutputElement.innerHTML = '<p class="text-gray-500">Tidak ada data transaksi untuk membuat laporan.</p>';
+                return;
+            }
+
+            showLoading('Menganalisis data penjualan...');
+            try {
+                const transactionSummary = transactionsForInsight.map(t => ({
+                    date: new Date(t.timestamp).toLocaleDateString('id-ID'),
+                    total: t.total,
+                    items: t.items.map(item => `${item.name} (${item.quantity}x)`).join(', ')
+                }));
+
+                const prompt = `Berikut adalah data transaksi penjualan:
+                ${JSON.stringify(transactionSummary, null, 2)}
+
+                Berdasarkan data di atas, berikan analisis singkat mengenai tren penjualan, produk terlaris, dan saran untuk meningkatkan penjualan. Sajikan dalam format yang mudah dibaca (misalnya, poin-poin atau paragraf singkat). Bahasa Indonesia.`;
+
+                let chatHistory = [];
+                chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+                const payload = { contents: chatHistory };
+                const apiKey = "AIzaSyB7a9rERcNmFQ86yPxPFj_neUUdW8LQAG0"; 
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const text = result.candidates[0].content.parts[0].text;
+                    reportOutputElement.innerHTML += `<h3 class="text-lg font-semibold mt-4 mb-2">Analisis AI:</h3><div class="prose max-w-none">${text.replace(/\n/g, '<br>')}</div>`;
+                } else {
+                    reportOutputElement.innerHTML += '<p class="text-red-500 mt-4">Gagal mendapatkan analisis penjualan dari AI. Coba lagi.</p>';
+                    console.error("LLM response structure unexpected:", result);
+                }
+            } catch (error) {
+                console.error("Error generating sales insights:", error);
+                reportOutputElement.innerHTML += `<p class="text-red-500 mt-4">Terjadi kesalahan saat membuat laporan: ${error.message}</p>`;
+            } finally {
+                hideLoading();
+            }
         }
 
 
@@ -2176,59 +2314,20 @@
                 }
             });
 
-            // Generate sales insights button
+            // Report buttons event listeners
+            dailyReportBtn.addEventListener('click', () => generateReport('daily'));
+            weeklyReportBtn.addEventListener('click', () => generateReport('weekly'));
+            monthlyReportBtn.addEventListener('click', () => generateReport('monthly'));
+
+            // Generate sales insights button listener
             generateSalesInsightsButton.addEventListener('click', async () => {
-                if (!isAuthReady || !userId) {
-                    showCustomMessage("Anda harus login untuk membuat laporan.", 'warning', 'Autentikasi Diperlukan');
-                    return;
+                let transactionsToAnalyze = [];
+                if (reportOutputElement.dataset.currentFilteredTransactions) {
+                    transactionsToAnalyze = JSON.parse(reportOutputElement.dataset.currentFilteredTransactions);
+                } else {
+                    transactionsToAnalyze = transactions; // Fallback to all transactions if no specific report is active
                 }
-                if (transactions.length === 0) {
-                    showCustomMessage('Tidak ada data transaksi untuk membuat laporan.', 'info', 'Data Kosong');
-                    reportOutputElement.innerHTML = '<p class="text-gray-500">Tidak ada data transaksi untuk membuat laporan.</p>';
-                    return;
-                }
-
-                showLoading('Menganalisis data penjualan...');
-                try {
-                    const transactionSummary = transactions.map(t => ({
-                        date: new Date(t.timestamp).toLocaleDateString('id-ID'),
-                        total: t.total,
-                        items: t.items.map(item => `${item.name} (${item.quantity}x)`).join(', ')
-                    }));
-
-                    const prompt = `Berikut adalah data transaksi penjualan:
-                    ${JSON.stringify(transactionSummary, null, 2)}
-
-                    Berdasarkan data di atas, berikan analisis singkat mengenai tren penjualan, produk terlaris, dan saran untuk meningkatkan penjualan. Sajikan dalam format yang mudah dibaca (misalnya, poin-poin atau paragraf singkat). Bahasa Indonesia.`;
-
-                    let chatHistory = [];
-                    chatHistory.push({ role: "user", parts: [{ text: prompt }] });
-                    const payload = { contents: chatHistory };
-                    const apiKey = "AIzaSyB7a9rERcNmFQ86yPxPFj_neUUdW8LQAG0"; 
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
-                    const response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-
-                    const result = await response.json();
-                    if (result.candidates && result.candidates.length > 0 &&
-                        result.candidates[0].content && result.candidates[0].content.parts &&
-                        result.candidates[0].content.parts.length > 0) {
-                        const text = result.candidates[0].content.parts[0].text;
-                        reportOutputElement.innerHTML = `<h3 class="text-lg font-semibold mb-2">Analisis Penjualan:</h3><div class="prose max-w-none">${text.replace(/\n/g, '<br>')}</div>`;
-                    } else {
-                        reportOutputElement.innerHTML = '<p class="text-red-500">Gagal mendapatkan analisis penjualan dari AI. Coba lagi.</p>';
-                        console.error("LLM response structure unexpected:", result);
-                    }
-                } catch (error) {
-                    console.error("Error generating sales insights:", error);
-                    reportOutputElement.innerHTML = `<p class="text-red-500">Terjadi kesalahan saat membuat laporan: ${error.message}</p>`;
-                } finally {
-                    hideLoading();
-                }
+                await generateSalesInsights(transactionsToAnalyze);
             });
         }
 
