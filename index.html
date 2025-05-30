@@ -220,9 +220,15 @@
         }
         #sidebar-toggle {
             z-index: 9999; /* Ensure toggle button is always on top */
+            cursor: pointer; /* Add cursor pointer for better UX */
         }
         #sidebar-overlay {
             z-index: 9997; /* Ensure overlay is below sidebar */
+            pointer-events: none; /* Initially block pointer events */
+        }
+        #sidebar-overlay.active { /* This class is added by JS when opening sidebar */
+            display: block; /* Ensure it's visible */
+            pointer-events: auto; /* Allow clicks when active */
         }
     </style>
 </head>
@@ -379,7 +385,7 @@
                             </div>
                             <div>
                                 <label for="store-logo-upload" class="block text-sm font-medium text-gray-700">Unggah Logo Toko (Opsional)</label>
-                                <input type="file" id="store-logo-upload" name="store-logo-upload" accept="image/*" class="form-input">
+                                <input type="file" id="store-logo-upload" name="store-logo-upload" class="form-input" accept="image/*">
                                 <img id="store-logo-preview" class="mt-2 h-20 w-auto rounded-md object-contain border border-gray-300" src="" alt="Logo Toko Preview" style="display: none;">
                                 <p class="text-xs text-gray-500 mt-1">Pilih file gambar (PNG, JPG, dll.). Ukuran file maksimal 500KB untuk kinerja optimal.</p>
                             </div>
@@ -1025,7 +1031,7 @@
                 transactions.sort((a, b) => b.timestamp - a.timestamp);
                 renderTransactionHistory();
                 // When transactions are updated, clear any previous report output and disable insight button
-                reportOutputElement.innerHTML = '<p class="text-gray-500">Hasil laporan akan ditampilkan di sini.</p>';
+                reportOutputElement.innerHTMLA = '<p class="text-gray-500">Hasil laporan akan ditampilkan di sini.</p>';
                 generateSalesInsightsButton.disabled = true;
             }, (error) => {
                 console.error("Error fetching transactions:", error);
@@ -1053,12 +1059,16 @@
         // --- Responsive Sidebar Toggle Logic ---
         function openSidebar() {
             sidebar.classList.add('open');
-            sidebarOverlay.classList.add('active');
+            sidebarOverlay.classList.add('active'); 
+            sidebarOverlay.style.display = 'block'; // Explicitly ensure display
+            sidebarOverlay.style.pointerEvents = 'auto'; // Explicitly allow pointer events
         }
 
         function closeSidebar() {
             sidebar.classList.remove('open');
             sidebarOverlay.classList.remove('active');
+            sidebarOverlay.style.display = 'none'; // Explicitly ensure display
+            sidebarOverlay.style.pointerEvents = 'none'; // Explicitly block pointer events
         }
 
         // --- Settings Functions ---
