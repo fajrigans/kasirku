@@ -1031,7 +1031,7 @@
                 transactions.sort((a, b) => b.timestamp - a.timestamp);
                 renderTransactionHistory();
                 // When transactions are updated, clear any previous report output and disable insight button
-                reportOutputElement.innerHTMLA = '<p class="text-gray-500">Hasil laporan akan ditampilkan di sini.</p>';
+                reportOutputElement.innerHTML = '<p class="text-gray-500">Hasil laporan akan ditampilkan di sini.</p>';
                 generateSalesInsightsButton.disabled = true;
             }, (error) => {
                 console.error("Error fetching transactions:", error);
@@ -1784,15 +1784,15 @@
             // Sidebar toggle listeners
             if (sidebarToggle) {
                 // Add both click and touchstart for better compatibility
-                sidebarToggle.addEventListener('click', openSidebar);
-                sidebarToggle.addEventListener('touchstart', openSidebar); // For mobile webviews
+                sidebarToggle.addEventListener('click', openSidebar, { passive: true });
+                sidebarToggle.addEventListener('touchstart', openSidebar, { passive: true }); // For mobile webviews
             } else {
                 console.error("Element with ID 'sidebar-toggle' not found.");
             }
             if (sidebarOverlay) {
                 // Add both click and touchstart for better compatibility
-                sidebarOverlay.addEventListener('click', closeSidebar);
-                sidebarOverlay.addEventListener('touchstart', closeSidebar); // For mobile webviews
+                sidebarOverlay.addEventListener('click', closeSidebar, { passive: true });
+                sidebarOverlay.addEventListener('touchstart', closeSidebar, { passive: true }); // For mobile webviews
             } else {
                 console.error("Element with ID 'sidebar-overlay' not found.");
             }
