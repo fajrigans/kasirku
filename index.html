@@ -222,6 +222,12 @@
             z-index: 9999; /* Ensure toggle button is always on top */
             cursor: pointer; /* Add cursor pointer for better UX */
             touch-action: manipulation; /* Allow custom touch handling, prevent default browser actions */
+            padding: 0.75rem; /* Increased padding for larger touch target */
+            width: 3rem; /* Explicit width for a consistent touch target */
+            height: 3rem; /* Explicit height for a consistent touch target */
+            display: flex; /* Use flexbox to center icon */
+            justify-content: center; /* Center icon horizontally */
+            align-items: center; /* Center icon vertically */
         }
         #sidebar-overlay {
             z-index: 9997; /* Ensure overlay is below sidebar */
@@ -260,7 +266,7 @@
         <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 hidden"></div>
 
         <main id="main-content" class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
-            <button id="sidebar-toggle" class="lg:hidden fixed top-4 left-4 p-2 rounded-md bg-indigo-600 text-white shadow-lg">
+            <button id="sidebar-toggle" class="lg:hidden fixed top-4 left-4 rounded-md bg-indigo-600 text-white shadow-lg">
                 <i class="fas fa-bars"></i>
             </button>
 
