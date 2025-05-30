@@ -221,10 +221,12 @@
         #sidebar-toggle {
             z-index: 9999; /* Ensure toggle button is always on top */
             cursor: pointer; /* Add cursor pointer for better UX */
+            touch-action: manipulation; /* Allow custom touch handling, prevent default browser actions */
         }
         #sidebar-overlay {
             z-index: 9997; /* Ensure overlay is below sidebar */
             pointer-events: none; /* Initially block pointer events */
+            touch-action: manipulation; /* Allow custom touch handling, prevent default browser actions */
         }
         #sidebar-overlay.active { /* This class is added by JS when opening sidebar */
             display: block; /* Ensure it's visible */
@@ -722,7 +724,7 @@
         let receiptItemsElement; // Declared with let
         let receiptSubtotalElement; // Declared with let
         let receiptTaxElement; // Declared with let
-        let receiptTaxPercentageElement; // Declared with let
+        let receiptTaxPercentageElement = document.getElementById('receipt-tax-percentage'); // Declared with let
         let receiptTotalElement; // Declared with let
         let receiptAmountPaidElement; // Declared with let
         let receiptChangeElement; // Declared with let
@@ -1745,7 +1747,6 @@
             receiptItemsElement = document.getElementById('receipt-items');
             receiptSubtotalElement = document.getElementById('receipt-subtotal');
             receiptTaxElement = document.getElementById('receipt-tax');
-            receiptTaxPercentageElement = document.getElementById('receipt-tax-percentage');
             receiptTotalElement = document.getElementById('receipt-total');
             receiptAmountPaidElement = document.getElementById('receipt-amount-paid');
             receiptChangeElement = document.getElementById('receipt-change');
