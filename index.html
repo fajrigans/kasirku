@@ -242,13 +242,14 @@
 </head>
 <body class="bg-gray-100 text-gray-800">
     <div class="flex h-screen overflow-hidden">
-        <nav id="sidebar" class="w-64 bg-gray-800 text-gray-200 p-5 space-y-3 flex-shrink-0 overflow-y-auto fixed h-full lg:static">
+        <!-- Sidebar -->
+        <nav id="sidebar" class="w-64 bg-gray-800 text-gray-200 p-5 space-y-3 flex-shrink-0 overflow-y-auto fixed h-full lg:static z-20">
             <h1 class="text-2xl font-bold text-white mb-6 text-center">Kaspocket</h1>
-            <a data-view="kasir" class="nav-link active"><i class="fas fa-cash-register"></i>Kasir</a>
-            <a data-view="manajemen-produk" class="nav-link"><i class="fas fa-box-open"></i>Manajemen Produk</a>
-            <a data-view="riwayat" class="nav-link"><i class="fas fa-history"></i>Riwayat Transaksi</a>
-            <a data-view="laporan" class="nav-link"><i class="fas fa-chart-line"></i>Laporan</a>
-            <a data-view="pengaturan" class="nav-link"><i class="fas fa-cog"></i>Pengaturan</a>
+            <a data-view="kasir" class="nav-link active"><i class="fas fa-cash-register mr-3"></i>Kasir</a>
+            <a data-view="manajemen-produk" class="nav-link"><i class="fas fa-box-open mr-3"></i>Manajemen Produk</a>
+            <a data-view="riwayat" class="nav-link"><i class="fas fa-history mr-3"></i>Riwayat Transaksi</a>
+            <a data-view="laporan" class="nav-link"><i class="fas fa-chart-line mr-3"></i>Laporan</a>
+            <a data-view="pengaturan" class="nav-link"><i class="fas fa-cog mr-3"></i>Pengaturan</a>
             <div class="pt-8 text-xs text-gray-400">
                 <p id="user-id-display">User ID: Loading...</p>
                 <p id="user-email-display" class="mt-1"></p>
@@ -263,177 +264,201 @@
             </div>
         </nav>
 
-        <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 hidden"></div>
+        <!-- Sidebar Overlay (for mobile) -->
+        <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 hidden z-10"></div>
 
-        <main id="main-content" class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
-            <button id="sidebar-toggle" class="lg:hidden fixed top-4 left-4 rounded-md bg-indigo-600 text-white shadow-lg">
-                <i class="fas fa-bars"></i>
-            </button>
-
-            <div id="authenticated-content" style="display: none;">
-                <div id="view-kasir" class="content-view active">
-                    <ins style="width: 160px;height:600px" data-width="160" data-height="600" class="df8814217c9" data-domain="//data963.click" data-affquery="/f985f0ce724c3b9a6b9d/f8814217c9/?placementName=desktop"><script src="//data963.click/js/responsive.js" async></script></ins>
-                    <header class="mb-6">
-                        <h2 class="text-3xl font-bold text-indigo-600">Point of Sale</h2>
-                    </header>
-                    <div class="flex flex-col lg:flex-row gap-6">
-                        <div class="lg:w-3/5">
-                            <h3 class="text-2xl font-semibold mb-4 text-gray-700">Pilih Produk</h3>
-                            <input type="text" id="product-search" placeholder="Cari produk..." class="form-input mb-4">
-                            <div id="product-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                            </div>
-                        </div>
-                        <div class="lg:w-2/5">
-                            <div class="bg-white p-6 rounded-lg shadow-xl">
-                                <h3 class="text-2xl font-semibold mb-4 border-b pb-2 text-indigo-600">Keranjang Belanja</h3>
-                                <div id="cart-items" class="cart-items-container max-h-60 overflow-y-auto mb-4 space-y-2">
-                                    <p id="empty-cart-message" class="text-gray-500">Keranjang masih kosong.</p>
-                                </div>
-                                <div class="border-t pt-4">
-                                    <div class="flex justify-between items-center mb-2">
-                                        <span class="text-lg font-medium text-gray-700">Subtotal:</span>
-                                        <span id="subtotal-price" class="text-lg font-semibold text-gray-900">Rp 0</span>
-                                    </div>
-                                    <div class="flex justify-between items-center mb-4">
-                                        <span class="text-lg font-medium text-gray-700">Pajak (<span id="tax-percentage-display">10</span>%):</span>
-                                        <span id="tax-price" class="text-lg font-semibold text-gray-900">Rp 0</span>
-                                    </div>
-                                    <div class="flex justify-between items-center text-xl font-bold text-indigo-700 mb-6">
-                                        <span>Total:</span>
-                                        <span id="total-price">Rp 0</span>
-                                    </div>
-                                    <button id="pay-button" class="w-full btn-primary py-3" disabled>
-                                        Bayar Sekarang
-                                    </button>
-                                    <button id="clear-cart-button" class="w-full btn-danger py-3 mt-3" disabled>
-                                        Kosongkan Keranjang
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="view-manajemen-produk" class="content-view">
-                    <header class="mb-6">
-                        <h2 class="text-3xl font-bold text-indigo-600">Manajemen Produk</h2>
-                    </header>
-                    <div class="bg-white p-6 rounded-lg shadow-xl mb-6">
-                        <h3 class="text-xl font-semibold mb-4 text-gray-700">Tambah Produk Baru</h3>
-                        <form id="add-product-form" class="space-y-4">
-                            <div>
-                                <label for="product-name" class="block text-sm font-medium text-gray-700">Nama Produk</label>
-                                <input type="text" id="product-name" name="product-name" class="form-input" required>
-                            </div>
-                            <div>
-                                <label for="product-price" class="block text-sm font-medium text-gray-700">Harga Produk (Rp)</label>
-                                <input type="number" id="product-price" name="product-price" class="form-input" min="0" required>
-                            </div>
-                            <div>
-                                <label for="product-image" class="block text-sm font-medium text-gray-700">Unggah Gambar Produk (Opsional)</label>
-                                <input type="file" id="product-image" name="product-image" class="form-input" accept="image/*">
-                                <p class="text-xs text-gray-500 mt-1">Pilih file gambar (PNG, JPG, dll.). Ukuran file maksimal 500KB.</p>
-                            </div>
-                            <button type="submit" class="btn-primary">Tambah Produk</button>
-                        </form>
-                    </div>
-                    <div class="bg-white p-6 rounded-lg shadow-xl">
-                        <h3 class="text-xl font-semibold mb-4 text-gray-700">Daftar Produk Tersedia</h3>
-                        <div id="product-management-list" class="product-management-list max-h-96 overflow-y-auto space-y-3">
-                            </div>
-                    </div>
-                </div>
-
-                <div id="view-riwayat" class="content-view">
-                    <header class="mb-6">
-                        <h2 class="text-3xl font-bold text-indigo-600">Riwayat Transaksi</h2>
-                    </header>
-                    <div class="bg-white p-6 rounded-lg shadow-xl">
-                        <div id="transaction-history-list" class="transaction-history-list max-h-[70vh] overflow-y-auto space-y-4">
-                            <p id="empty-history-message" class="text-gray-500">Belum ada riwayat transaksi.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="view-laporan" class="content-view">
-                    <header class="mb-6">
-                        <h2 class="text-3xl font-bold text-indigo-600">Laporan Penjualan</h2>
-                    </header>
-                    <div class="bg-white p-6 rounded-lg shadow-xl">
-                        <p class="text-gray-600">Pilih periode laporan di bawah ini:</p>
-                        <div class="mt-4 flex flex-wrap gap-2">
-                            <button id="daily-report-btn" class="btn-secondary">Laporan Harian</button>
-                            <button id="weekly-report-btn" class="btn-secondary">Laporan Mingguan</button>
-                            <button id="monthly-report-btn" class="btn-secondary">Laporan Bulanan</button>
-                        </div>
-                        <button id="generate-sales-insights-button" class="btn-primary mt-6" disabled>Generate Sales Insights ✨</button>
-                        <div id="report-output" class="mt-6 p-4 border rounded-md bg-gray-50 min-h-[200px]">
-                            <p class="text-gray-500">Hasil laporan akan ditampilkan di sini.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="view-pengaturan" class="content-view">
-                    <header class="mb-6">
-                        <h2 class="text-3xl font-bold text-indigo-600">Pengaturan Aplikasi</h2>
-                    </header>
-                    <div class="bg-white p-6 rounded-lg shadow-xl mb-6">
-                        <h3 class="text-xl font-semibold mb-4 text-gray-700">Pengaturan Struk & Toko</h3>
-                        <form id="settings-form" class="space-y-4">
-                            <div>
-                                <label for="store-name" class="block text-sm font-medium text-gray-700">Nama Toko</label>
-                                <input type="text" id="store-name" name="store-name" class="form-input" required>
-                            </div>
-                            <div>
-                                <label for="store-address" class="block text-sm font-medium text-gray-700">Alamat Toko</label>
-                                <input type="text" id="store-address" name="store-address" class="form-input" required>
-                            </div>
-                            <div>
-                                <label for="store-phone" class="block text-sm font-medium text-gray-700">Nomor Telepon Toko</label>
-                                <input type="tel" id="store-phone" name="store-phone" class="form-input">
-                            </div>
-                            <div>
-                                <label for="store-logo-upload" class="block text-sm font-medium text-gray-700">Unggah Logo Toko (Opsional)</label>
-                                <input type="file" id="store-logo-upload" name="store-logo-upload" class="form-input" accept="image/*">
-                                <img id="store-logo-preview" class="mt-2 h-20 w-auto rounded-md object-contain border border-gray-300" src="" alt="Logo Toko Preview" style="display: none;">
-                                <p class="text-xs text-gray-500 mt-1">Pilih file gambar (PNG, JPG, dll.). Ukuran file maksimal 500KB untuk kinerja optimal.</p>
-                            </div>
-                            <div>
-                                <label for="tax-rate" class="block text-sm font-medium text-gray-700">Tingkat Pajak (%)</label>
-                                <input type="number" id="tax-rate" name="tax-rate" class="form-input" min="0" max="100" step="0.1" required>
-                                <p class="text-xs text-gray-500 mt-1">Masukkan persentase pajak (misal: 10 untuk 10%).</p>
-                            </div>
-                            <button type="submit" class="btn-primary">Simpan Pengaturan</button>
-                        </form>
-                    </div>
-                    <div class="bg-white p-6 rounded-lg shadow-xl mt-6">
-                        <h3 class="text-xl font-semibold mb-4 text-gray-700">Kelola Akun</h3>
-                        <p class="text-gray-600 mb-4">Hapus akun Anda secara permanen beserta semua data produk dan transaksi.</p>
-                        <button id="delete-account-button" class="btn-danger py-2 px-4">
-                            <i class="fas fa-user-times mr-2"></i> Hapus Akun Saya
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div id="unauthenticated-message" class="text-center p-10 bg-white rounded-lg shadow-xl" style="display: none;">
-                <h2 class="text-3xl font-bold text-indigo-600 mb-4">Selamat Datang di Kaspocket!</h2>
-                <p class="text-lg text-gray-700 mb-6">
-                    Aplikasi kasir lengkap untuk mengelola produk, transaksi, dan laporan penjualan Anda.
-                </p>
-                <p class="text-md text-gray-600 mb-8">
-                    Untuk memulai, silakan login atau daftar akun baru.
-                </p>
-                <button id="show-auth-modal-from-main" class="btn-primary py-3 px-6 text-lg">
-                    Login / Daftar Sekarang
+        <!-- Main Content Area and Ad Sidebar -->
+        <div class="flex flex-1 overflow-hidden relative">
+            <main id="main-content" class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto z-0">
+                <!-- Sidebar Toggle Button (for mobile) -->
+                <button id="sidebar-toggle" class="lg:hidden fixed top-4 left-4 z-30 p-2 rounded-md bg-indigo-600 text-white shadow-lg">
+                    <i class="fas fa-bars"></i>
                 </button>
-            </div>
-        </main>
+
+                <div id="authenticated-content" style="display: none;">
+                    <!-- View: Kasir -->
+                    <div id="view-kasir" class="content-view active">
+                        <header class="mb-6">
+                            <h2 class="text-3xl font-bold text-indigo-600">Point of Sale</h2>
+                        </header>
+                        <div class="flex flex-col lg:flex-row gap-6">
+                            <div class="lg:w-3/5">
+                                <h3 class="text-2xl font-semibold mb-4 text-gray-700">Pilih Produk</h3>
+                                <input type="text" id="product-search" placeholder="Cari produk..." class="form-input mb-4">
+                                <div id="product-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                                    <!-- Product cards will be loaded here -->
+                                </div>
+                            </div>
+                            <div class="lg:w-2/5">
+                                <div class="bg-white p-6 rounded-lg shadow-xl">
+                                    <h3 class="text-2xl font-semibold mb-4 border-b pb-2 text-indigo-600">Keranjang Belanja</h3>
+                                    <div id="cart-items" class="cart-items-container max-h-60 overflow-y-auto mb-4 space-y-2">
+                                        <p id="empty-cart-message" class="text-gray-500">Keranjang masih kosong.</p>
+                                    </div>
+                                    <div class="border-t pt-4">
+                                        <div class="flex justify-between items-center mb-2">
+                                            <span class="text-lg font-medium text-gray-700">Subtotal:</span>
+                                            <span id="subtotal-price" class="text-lg font-semibold text-gray-900">Rp 0</span>
+                                        </div>
+                                        <div class="flex justify-between items-center mb-4">
+                                            <span class="text-lg font-medium text-gray-700">Pajak (<span id="tax-percentage-display">10</span>%):</span>
+                                            <span id="tax-price" class="text-lg font-semibold text-gray-900">Rp 0</span>
+                                        </div>
+                                        <div class="flex justify-between items-center text-xl font-bold text-indigo-700 mb-6">
+                                            <span>Total:</span>
+                                            <span id="total-price">Rp 0</span>
+                                        </div>
+                                        <button id="pay-button" class="w-full btn-primary py-3" disabled>
+                                            Bayar Sekarang
+                                        </button>
+                                        <button id="clear-cart-button" class="w-full btn-danger py-3 mt-3" disabled>
+                                            Kosongkan Keranjang
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- View: Manajemen Produk -->
+                    <div id="view-manajemen-produk" class="content-view">
+                        <header class="mb-6">
+                            <h2 class="text-3xl font-bold text-indigo-600">Manajemen Produk</h2>
+                        </header>
+                        <div class="bg-white p-6 rounded-lg shadow-xl mb-6">
+                            <h3 class="text-xl font-semibold mb-4 text-gray-700">Tambah Produk Baru</h3>
+                            <form id="add-product-form" class="space-y-4">
+                                <div>
+                                    <label for="product-name" class="block text-sm font-medium text-gray-700">Nama Produk</label>
+                                    <input type="text" id="product-name" name="product-name" class="form-input" required>
+                                </div>
+                                <div>
+                                    <label for="product-price" class="block text-sm font-medium text-gray-700">Harga Produk (Rp)</label>
+                                    <input type="number" id="product-price" name="product-price" class="form-input" min="0" required>
+                                </div>
+                                <div>
+                                    <label for="product-image" class="block text-sm font-medium text-gray-700">Unggah Gambar Produk (Opsional)</label>
+                                    <input type="file" id="product-image" name="product-image" class="form-input" accept="image/*">
+                                    <p class="text-xs text-gray-500 mt-1">Pilih file gambar (PNG, JPG, dll.). Ukuran file maksimal 500KB.</p>
+                                </div>
+                                <button type="submit" class="btn-primary">Tambah Produk</button>
+                            </form>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-xl">
+                            <h3 class="text-xl font-semibold mb-4 text-gray-700">Daftar Produk Tersedia</h3>
+                            <div id="product-management-list" class="product-management-list max-h-96 overflow-y-auto space-y-3">
+                                <!-- Product management list will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- View: Riwayat Transaksi -->
+                    <div id="view-riwayat" class="content-view">
+                        <header class="mb-6">
+                            <h2 class="text-3xl font-bold text-indigo-600">Riwayat Transaksi</h2>
+                        </header>
+                        <div class="bg-white p-6 rounded-lg shadow-xl">
+                            <div id="transaction-history-list" class="transaction-history-list max-h-[70vh] overflow-y-auto space-y-4">
+                                <p id="empty-history-message" class="text-gray-500">Belum ada riwayat transaksi.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- View: Laporan Penjualan -->
+                    <div id="view-laporan" class="content-view">
+                        <header class="mb-6">
+                            <h2 class="text-3xl font-bold text-indigo-600">Laporan Penjualan</h2>
+                        </header>
+                        <div class="bg-white p-6 rounded-lg shadow-xl">
+                            <p class="text-gray-600">Pilih periode laporan di bawah ini:</p>
+                            <div class="mt-4 flex flex-wrap gap-2">
+                                <button id="daily-report-btn" class="btn-secondary">Laporan Harian</button>
+                                <button id="weekly-report-btn" class="btn-secondary">Laporan Mingguan</button>
+                                <button id="monthly-report-btn" class="btn-secondary">Laporan Bulanan</button>
+                            </div>
+                            <button id="generate-sales-insights-button" class="btn-primary mt-6" disabled>Generate Sales Insights ✨</button>
+                            <div id="report-output" class="mt-6 p-4 border rounded-md bg-gray-50 min-h-[200px]">
+                                <p class="text-gray-500">Hasil laporan akan ditampilkan di sini.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- View: Pengaturan Aplikasi -->
+                    <div id="view-pengaturan" class="content-view">
+                        <header class="mb-6">
+                            <h2 class="text-3xl font-bold text-indigo-600">Pengaturan Aplikasi</h2>
+                        </header>
+                        <div class="bg-white p-6 rounded-lg shadow-xl mb-6">
+                            <h3 class="text-xl font-semibold mb-4 text-gray-700">Pengaturan Struk & Toko</h3>
+                            <form id="settings-form" class="space-y-4">
+                                <div>
+                                    <label for="store-name" class="block text-sm font-medium text-gray-700">Nama Toko</label>
+                                    <input type="text" id="store-name" name="store-name" class="form-input" required>
+                                </div>
+                                <div>
+                                    <label for="store-address" class="block text-sm font-medium text-gray-700">Alamat Toko</label>
+                                    <input type="text" id="store-address" name="store-address" class="form-input" required>
+                                </div>
+                                <div>
+                                    <label for="store-phone" class="block text-sm font-medium text-gray-700">Nomor Telepon Toko</label>
+                                    <input type="tel" id="store-phone" name="store-phone" class="form-input">
+                                </div>
+                                <div>
+                                    <label for="store-logo-upload" class="block text-sm font-medium text-gray-700">Unggah Logo Toko (Opsional)</label>
+                                    <input type="file" id="store-logo-upload" name="store-logo-upload" class="form-input" accept="image/*">
+                                    <img id="store-logo-preview" class="mt-2 h-20 w-auto rounded-md object-contain border border-gray-300" src="" alt="Logo Toko Preview" style="display: none;">
+                                    <p class="text-xs text-gray-500 mt-1">Pilih file gambar (PNG, JPG, dll.). Ukuran file maksimal 500KB untuk kinerja optimal.</p>
+                                </div>
+                                <div>
+                                    <label for="tax-rate" class="block text-sm font-medium text-gray-700">Tingkat Pajak (%)</label>
+                                    <input type="number" id="tax-rate" name="tax-rate" class="form-input" min="0" max="100" step="0.1" required>
+                                    <p class="text-xs text-gray-500 mt-1">Masukkan persentase pajak (misal: 10 untuk 10%).</p>
+                                </div>
+                                <button type="submit" class="btn-primary">Simpan Pengaturan</button>
+                            </form>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-xl mt-6">
+                            <h3 class="text-xl font-semibold mb-4 text-gray-700">Kelola Akun</h3>
+                            <p class="text-gray-600 mb-4">Hapus akun Anda secara permanen beserta semua data produk dan transaksi.</p>
+                            <button id="delete-account-button" class="btn-danger py-2 px-4">
+                                <i class="fas fa-user-times mr-2"></i> Hapus Akun Saya
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Unauthenticated Message -->
+                <div id="unauthenticated-message" class="text-center p-10 bg-white rounded-lg shadow-xl" style="display: none;">
+                    <h2 class="text-3xl font-bold text-indigo-600 mb-4">Selamat Datang di Kaspocket!</h2>
+                    <p class="text-lg text-gray-700 mb-6">
+                        Aplikasi kasir lengkap untuk mengelola produk, transaksi, dan laporan penjualan Anda.
+                    </p>
+                    <p class="text-md text-gray-600 mb-8">
+                        Untuk memulai, silakan login atau daftar akun baru.
+                    </p>
+                    <button id="show-auth-modal-from-main" class="btn-primary py-3 px-6 text-lg">
+                        Login / Daftar Sekarang
+                    </button>
+                </div>
+            </main>
+
+            <!-- Ad Sidebar (hidden on small screens, shown on large screens) -->
+            <aside class="w-[160px] flex-shrink-0 hidden lg:block overflow-y-auto p-4 bg-gray-50 border-l border-gray-200">
+                <div class="sticky top-4">
+                    <!-- Ad Code Here -->
+                    <ins style="width: 160px; height: 600px; display: block;" data-width="160" data-height="600" class="df8814217c9" data-domain="//data963.click" data-affquery="/f985f0ce724c3b9a6b9d/f8814217c9/?placementName=desktop">
+                        <script src="//data963.click/js/responsive.js" async></script>
+                    </ins>
+                </div>
+            </aside>
+        </div>
     </div>
 
-    <div id="payment-modal" class="modal">
+    <!-- Payment Modal -->
+    <div id="payment-modal" class="modal hidden">
         <div class="modal-content">
-            <span id="close-payment-modal-button" class="modal-close-button">&times;</span> <h3 class="text-2xl font-semibold mb-4 text-indigo-600">Lakukan Pembayaran</h3>
+            <span id="close-payment-modal-button" class="modal-close-button">&times;</span>
+            <h3 class="text-2xl font-semibold mb-4 text-indigo-600">Lakukan Pembayaran</h3>
             <div class="mb-4">
                 <p class="text-lg font-medium text-gray-700">Total Pembelian:</p>
                 <span id="modal-total-to-pay" class="text-3xl font-bold text-indigo-700">Rp 0</span>
@@ -481,7 +506,9 @@
         </div>
     </div>
 
-    <div id="payment-success-modal" class="modal"> <div class="modal-content">
+    <!-- Payment Success Modal -->
+    <div id="payment-success-modal" class="modal hidden">
+        <div class="modal-content">
             <span id="close-success-modal-button" class="modal-close-button">&times;</span>
             <h3 class="text-2xl font-semibold mb-4 text-green-600">Pembayaran Berhasil!</h3>
             <i class="fas fa-check-circle text-green-500 text-5xl mb-4"></i>
@@ -497,7 +524,8 @@
         </div>
     </div>
 
-    <div id="receipt-modal" class="modal">
+    <!-- Receipt Modal -->
+    <div id="receipt-modal" class="modal hidden">
         <div class="modal-content max-w-sm p-6 bg-white rounded-lg shadow-xl text-left">
             <span id="close-receipt-modal-button" class="modal-close-button">&times;</span>
             <div id="receipt-print-area" class="p-4">
@@ -515,7 +543,8 @@
                 <div class="mb-4">
                     <h3 class="text-md font-semibold mb-2">Detail Pembelian:</h3>
                     <ul id="receipt-items" class="space-y-1">
-                        </ul>
+                        <!-- Receipt items will be populated here -->
+                    </ul>
                 </div>
                 <div class="border-t border-gray-300 pt-2 mb-4">
                     <div class="flex justify-between text-sm mb-1">
@@ -564,7 +593,8 @@
         </div>
     </div>
 
-    <div id="message-modal" class="modal">
+    <!-- Message Modal -->
+    <div id="message-modal" class="modal hidden">
         <div class="message-modal-content">
             <span id="close-message-modal-button" class="modal-close-button">&times;</span>
             <h3 id="message-modal-title" class="text-xl font-semibold mb-3"></h3>
@@ -573,7 +603,8 @@
         </div>
     </div>
 
-    <div id="auth-modal" class="modal">
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="modal hidden">
         <div class="modal-content">
             <h2 id="auth-title" class="text-2xl font-bold text-indigo-600 mb-6">Login</h2>
             <form id="auth-form" class="space-y-4">
@@ -596,7 +627,8 @@
         </div>
     </div>
 
-    <div id="delete-account-modal" class="modal">
+    <!-- Delete Account Modal -->
+    <div id="delete-account-modal" class="modal hidden">
         <div class="modal-content">
             <span id="close-delete-account-modal-button" class="modal-close-button">&times;</span>
             <h2 class="text-2xl font-bold text-red-600 mb-4">Hapus Akun Permanen</h2>
@@ -619,7 +651,8 @@
         </div>
     </div>
 
-    <div id="edit-product-modal" class="modal">
+    <!-- Edit Product Modal -->
+    <div id="edit-product-modal" class="modal hidden">
         <div class="modal-content">
             <span id="close-edit-product-modal-button" class="modal-close-button">&times;</span>
             <h3 class="text-2xl font-semibold mb-4 text-indigo-600">Edit Produk</h3>
@@ -642,11 +675,6 @@
                 <button type="submit" class="btn-primary w-full py-3">Simpan Perubahan</button>
             </form>
         </div>
-    </div>
-
-    <div id="loading-overlay" class="loading-overlay">
-        <div class="spinner"></div>
-        <p class="mt-4 text-gray-700 text-lg" id="loading-message">Memuat data...</p>
     </div>
 
     <script type="module">
